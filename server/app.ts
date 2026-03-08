@@ -49,8 +49,27 @@ const toInt = (value: unknown, fallback = 0) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-app.get('/api/health', (_req, res) => {
-  res.json({ success: true, status: 'ok' });
+app.get('/api/health', async (_req, res) => {
+    try {
+        const dbRes = await pool.query(`SELECT current_database() AS db`);
+        const tablesRes = await pool.query(`
+      SELECT table_name
+      FROM information_schema.tables
+      WHERE table_schema = 'public'
+      ORDER BY table_name
+    `);
+
+        return res.json({
+            success: true,
+            db: dbRes.rows[0]?.db,
+            tables: tablesRes.rows.map((r: any) => r.table_name),
+        });
+    } catch (error: any) {
+        return res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
 });
 
 app.post('/api/upload', upload.single('image'), async (req, res) => {
