@@ -57,7 +57,7 @@ export default function Header() {
             
             {user ? (
               <div className="flex items-center gap-3 ml-2">
-                <Link to={user.role === 'admin' ? '/admin' : '/tai-khoan'} className="flex items-center gap-2 text-sm font-medium hover:text-xanh-rung transition-colors">
+                <Link to={['admin', 'seller', 'factory_manager'].includes(user.role) ? '/admin' : '/tai-khoan'} className="flex items-center gap-2 text-sm font-medium hover:text-xanh-rung transition-colors">
                   <User className="w-5 h-5" />
                   <span className="hidden sm:inline">{user.name}</span>
                 </Link>

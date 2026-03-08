@@ -9,6 +9,7 @@ export interface Product {
   weights: string[];
   image: string;
   price: number;
+  stock?: number;
 }
 
 export const products: Product[] = [

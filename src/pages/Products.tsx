@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Filter, ChevronDown, Search, ArrowUpDown } from 'lucide-react';
+import { Filter, ChevronDown, Search, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+
+const ITEMS_PER_PAGE = 9;
 
 export default function Products() {
   const [products, setProducts] = useState<any[]>([]);
@@ -10,6 +12,7 @@ export default function Products() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [activeWeight, setActiveWeight] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   
   const categories = ['Tất cả', 'Thịt gác bếp', 'Lạp xưởng', 'Cá gác bếp', 'Gia vị'];
   const weights = ['250g', '500g', '1kg'];
@@ -18,7 +21,12 @@ export default function Products() {
     fetch('/api/products')
       .then(res => res.json())
       .then(data => {
-        setProducts(data);
+        if (Array.isArray(data)) {
+          setProducts(data);
+        } else {
+          console.error('Expected array of products, got:', data);
+          setProducts([]);
+        }
         setLoading(false);
       })
       .catch(err => {
@@ -26,6 +34,11 @@ export default function Products() {
         setLoading(false);
       });
   }, []);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeCategory, searchQuery, sortBy, activeWeight]);
 
   // Filter and Sort Logic
   let filteredProducts = products;
@@ -50,6 +63,13 @@ export default function Products() {
     if (sortBy === 'price-desc') return b.price - a.price;
     return 0; // newest is default, assuming DB returns in order or we don't have created_at yet
   });
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <div className="bg-kem min-h-screen py-16">
@@ -142,7 +162,7 @@ export default function Products() {
           <div className="flex-grow">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 bg-white p-4 rounded-2xl shadow-sm border border-khoi-lam/5">
               <span className="text-khoi-lam/60 text-sm font-medium px-2">
-                Hiển thị <strong className="text-khoi-lam">{filteredProducts.length}</strong> sản phẩm
+                Hiển thị <strong className="text-khoi-lam">{paginatedProducts.length}</strong> / {filteredProducts.length} sản phẩm
               </span>
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <ArrowUpDown className="w-4 h-4 text-khoi-lam/50" />
@@ -162,73 +182,107 @@ export default function Products() {
               <div className="flex justify-center items-center py-20">
                 <div className="w-10 h-10 border-4 border-khoi-lam/20 border-t-khoi-lam rounded-full animate-spin"></div>
               </div>
-            ) : filteredProducts.length > 0 ? (
-              <motion.div 
-                layout
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
-              >
-                <AnimatePresence>
-                  {filteredProducts.map((product) => (
-                    <motion.div
-                      layout
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      transition={{ duration: 0.2 }}
-                      key={product.id}
-                    >
-                      <Link to={`/san-pham/${product.id}`} className="group flex flex-col bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-khoi-lam/5 h-full">
-                        <div className="aspect-[4/5] overflow-hidden bg-kem relative">
-                          <img 
-                            src={product.image} 
-                            alt={product.name} 
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                            referrerPolicy="no-referrer"
-                          />
-                          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-khoi-lam shadow-sm">
-                            {product.category}
+            ) : paginatedProducts.length > 0 ? (
+              <>
+                <motion.div 
+                  layout
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+                >
+                  <AnimatePresence mode="popLayout">
+                    {paginatedProducts.map((product) => (
+                      <motion.div
+                        layout
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        transition={{ duration: 0.2 }}
+                        key={product.id}
+                      >
+                        <Link to={`/san-pham/${product.id}`} className="group flex flex-col bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-khoi-lam/5 h-full">
+                          <div className="aspect-[4/5] overflow-hidden bg-kem relative">
+                            <img 
+                              src={product.image} 
+                              alt={product.name} 
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                              referrerPolicy="no-referrer"
+                            />
+                            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-khoi-lam shadow-sm">
+                              {product.category}
+                            </div>
+                            {product.stock <= 0 && (
+                              <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">
+                                <span className="bg-white text-do-gach px-4 py-2 rounded-full font-bold text-sm shadow-lg">Hết hàng</span>
+                              </div>
+                            )}
                           </div>
-                          {product.stock <= 0 && (
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">
-                              <span className="bg-white text-do-gach px-4 py-2 rounded-full font-bold text-sm shadow-lg">Hết hàng</span>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="p-6 flex flex-col flex-grow">
-                          <h3 className="font-serif text-xl font-semibold text-khoi-lam mb-2 group-hover:text-xanh-rung transition-colors">
-                            {product.name}
-                          </h3>
-                          <p className="text-khoi-lam/60 text-sm line-clamp-2 mb-6 flex-grow">
-                            {product.description}
-                          </p>
                           
-                          <div className="flex justify-between items-end pt-4 border-t border-khoi-lam/10">
-                            <div>
-                              <span className="text-xs text-khoi-lam/50 block mb-1">Giá từ</span>
-                              <span className="font-medium text-lg text-khoi-lam">
-                                {product.price.toLocaleString('vi-VN')}đ
-                              </span>
-                            </div>
-                            <div className="flex gap-1">
-                              {Array.isArray(product.weights) && product.weights.slice(0, 2).map((w: string) => (
-                                <span key={w} className="text-[10px] uppercase tracking-wider bg-khoi-lam/5 text-khoi-lam px-2 py-1 rounded">
-                                  {w.trim()}
+                          <div className="p-6 flex flex-col flex-grow">
+                            <h3 className="font-serif text-xl font-semibold text-khoi-lam mb-2 group-hover:text-xanh-rung transition-colors">
+                              {product.name}
+                            </h3>
+                            <p className="text-khoi-lam/60 text-sm line-clamp-2 mb-6 flex-grow">
+                              {product.description}
+                            </p>
+                            
+                            <div className="flex justify-between items-center pt-4 border-t border-khoi-lam/10 mt-auto">
+                              <div className="flex flex-col">
+                                <span className="text-xs text-khoi-lam/50 block mb-0.5">Giá từ</span>
+                                <span className="font-semibold text-lg text-khoi-lam">
+                                  {product.price.toLocaleString('vi-VN')}đ
                                 </span>
-                              ))}
-                              {Array.isArray(product.weights) && product.weights.length > 2 && (
-                                <span className="text-[10px] uppercase tracking-wider bg-khoi-lam/5 text-khoi-lam px-2 py-1 rounded">
-                                  +{product.weights.length - 2}
-                                </span>
+                              </div>
+                              {Array.isArray(product.weights) && product.weights.length > 0 && (
+                                <div className="bg-khoi-lam/5 text-khoi-lam px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide">
+                                  {product.weights[0].trim()}
+                                </div>
                               )}
                             </div>
                           </div>
-                        </div>
-                      </Link>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </motion.div>
+                        </Link>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </motion.div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="mt-12 flex justify-center items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="p-2 rounded-xl border border-khoi-lam/10 text-khoi-lam hover:bg-khoi-lam/5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      aria-label="Trang trước"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`w-10 h-10 rounded-xl font-medium transition-all duration-200 ${
+                            currentPage === page
+                              ? 'bg-khoi-lam text-kem shadow-md'
+                              : 'text-khoi-lam hover:bg-khoi-lam/5'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="p-2 rounded-xl border border-khoi-lam/10 text-khoi-lam hover:bg-khoi-lam/5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      aria-label="Trang tiếp theo"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-20 bg-white rounded-3xl border border-khoi-lam/5">
                 <p className="text-khoi-lam/60 text-lg">Không tìm thấy sản phẩm nào phù hợp.</p>

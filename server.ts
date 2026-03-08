@@ -1,6 +1,6 @@
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
-import db from './server/db';
+import pool, { initDB } from './server/db';
 import bcrypt from 'bcryptjs';
 import { google } from 'googleapis';
 import multer from 'multer';
@@ -9,6 +9,8 @@ import stream from 'stream';
 const upload = multer({ storage: multer.memoryStorage() });
 
 async function startServer() {
+  await initDB();
+
   const app = express();
   const PORT = 3000;
 
@@ -89,49 +91,57 @@ async function startServer() {
   // --- API ROUTES ---
 
   // Auth Routes
-  app.post('/api/auth/login', (req, res) => {
+  app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
-    const user = db.prepare('SELECT id, email, password, name, role FROM users WHERE email = ?').get(email) as any;
-    
-    if (!user) {
-      return res.status(401).json({ success: false, message: 'Email hoặc mật khẩu không đúng' });
-    }
+    try {
+      const userRes = await pool.query('SELECT id, email, password, name, role FROM users WHERE email = $1', [email]);
+      const user = userRes.rows[0];
+      
+      if (!user) {
+        return res.status(401).json({ success: false, message: 'Email hoặc mật khẩu không đúng' });
+      }
 
-    const isValid = user.password.startsWith('$2') 
-      ? bcrypt.compareSync(password, user.password) 
-      : password === user.password;
+      const isValid = user.password.startsWith('$2') 
+        ? bcrypt.compareSync(password, user.password) 
+        : password === user.password;
 
-    if (isValid) {
-      const { password: _, ...userWithoutPassword } = user;
-      res.json({ success: true, user: userWithoutPassword });
-    } else {
-      res.status(401).json({ success: false, message: 'Email hoặc mật khẩu không đúng' });
+      if (isValid) {
+        const { password: _, ...userWithoutPassword } = user;
+        res.json({ success: true, user: userWithoutPassword });
+      } else {
+        res.status(401).json({ success: false, message: 'Email hoặc mật khẩu không đúng' });
+      }
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Lỗi server' });
     }
   });
 
-  app.post('/api/auth/register', (req, res) => {
+  app.post('/api/auth/register', async (req, res) => {
     const { email, password, name } = req.body;
     try {
       const hashedPassword = bcrypt.hashSync(password, 10);
-      const result = db.prepare('INSERT INTO users (email, password, name) VALUES (?, ?, ?)').run(email, hashedPassword, name);
-      const user = db.prepare('SELECT id, email, name, role FROM users WHERE id = ?').get(result.lastInsertRowid);
-      res.json({ success: true, user });
+      const result = await pool.query('INSERT INTO users (email, password, name) VALUES ($1, $2, $3) RETURNING id, email, name, role', [email, hashedPassword, name]);
+      res.json({ success: true, user: result.rows[0] });
     } catch (error) {
       res.status(400).json({ success: false, message: 'Email đã tồn tại' });
     }
   });
 
   // Product Routes
-  app.get('/api/products', (req, res) => {
-    const products = db.prepare('SELECT * FROM products').all();
-    res.json(products.map((p: any) => ({ ...p, weights: p.weights ? p.weights.split(',').map((w: string) => w.trim()) : [] })));
+  app.get('/api/products', async (req, res) => {
+    try {
+      const productsRes = await pool.query('SELECT * FROM products');
+      res.json(productsRes.rows.map((p: any) => ({ ...p, weights: p.weights ? p.weights.split(',').map((w: string) => w.trim()) : [] })));
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Lỗi server' });
+    }
   });
 
-  app.post('/api/products', (req, res) => {
+  app.post('/api/products', async (req, res) => {
     const { id, name, description, price, category, image, weights, stock } = req.body;
     try {
-      db.prepare('INSERT INTO products (id, name, description, price, category, image, weights, stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(
-        id, name, description, price, category, image, weights.join(','), stock || 100
+      await pool.query('INSERT INTO products (id, name, description, price, category, image, weights, stock) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)', 
+        [id, name, description, price, category, image, weights.join(','), stock || 100]
       );
       res.json({ success: true });
     } catch (error) {
@@ -139,11 +149,11 @@ async function startServer() {
     }
   });
 
-  app.put('/api/products/:id', (req, res) => {
+  app.put('/api/products/:id', async (req, res) => {
     const { name, description, price, category, image, weights, stock } = req.body;
     try {
-      db.prepare('UPDATE products SET name = ?, description = ?, price = ?, category = ?, image = ?, weights = ?, stock = ? WHERE id = ?').run(
-        name, description, price, category, image, weights.join(','), stock || 0, req.params.id
+      await pool.query('UPDATE products SET name = $1, description = $2, price = $3, category = $4, image = $5, weights = $6, stock = $7 WHERE id = $8', 
+        [name, description, price, category, image, weights.join(','), stock || 0, req.params.id]
       );
       res.json({ success: true });
     } catch (error) {
@@ -151,152 +161,201 @@ async function startServer() {
     }
   });
 
-  app.delete('/api/products/:id', (req, res) => {
-    db.prepare('DELETE FROM products WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
+  app.delete('/api/products/:id', async (req, res) => {
+    try {
+      await pool.query('DELETE FROM products WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Lỗi server' });
+    }
   });
 
   // Coupon Routes
-  app.get('/api/coupons', (req, res) => {
-    const coupons = db.prepare('SELECT * FROM coupons').all();
-    res.json(coupons);
+  app.get('/api/coupons', async (req, res) => {
+    try {
+      const couponsRes = await pool.query('SELECT * FROM coupons');
+      res.json(couponsRes.rows);
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Lỗi server' });
+    }
   });
 
-  app.post('/api/coupons', (req, res) => {
+  app.post('/api/coupons', async (req, res) => {
     const { code, discount_percent } = req.body;
     try {
-      db.prepare('INSERT INTO coupons (code, discount_percent) VALUES (?, ?)').run(code, discount_percent);
+      await pool.query('INSERT INTO coupons (code, discount_percent) VALUES ($1, $2)', [code, discount_percent]);
       res.json({ success: true });
     } catch (error) {
       res.status(400).json({ success: false, message: 'Mã đã tồn tại' });
     }
   });
 
-  app.put('/api/coupons/:code/status', (req, res) => {
+  app.put('/api/coupons/:code/status', async (req, res) => {
     const { is_active } = req.body;
-    db.prepare('UPDATE coupons SET is_active = ? WHERE code = ?').run(is_active ? 1 : 0, req.params.code);
-    res.json({ success: true });
+    try {
+      await pool.query('UPDATE coupons SET is_active = $1 WHERE code = $2', [is_active ? 1 : 0, req.params.code]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Lỗi server' });
+    }
   });
 
-  app.post('/api/coupons/validate', (req, res) => {
+  app.post('/api/coupons/validate', async (req, res) => {
     const { code } = req.body;
-    const coupon = db.prepare('SELECT * FROM coupons WHERE code = ? AND is_active = 1').get(code) as any;
-    if (coupon) {
-      res.json({ success: true, discount_percent: coupon.discount_percent });
-    } else {
-      res.status(404).json({ success: false, message: 'Mã giảm giá không hợp lệ hoặc đã hết hạn' });
+    try {
+      const couponRes = await pool.query('SELECT * FROM coupons WHERE code = $1 AND is_active = 1', [code]);
+      const coupon = couponRes.rows[0];
+      if (coupon) {
+        res.json({ success: true, discount_percent: coupon.discount_percent });
+      } else {
+        res.status(404).json({ success: false, message: 'Mã giảm giá không hợp lệ hoặc đã hết hạn' });
+      }
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Lỗi server' });
     }
   });
 
   // Order Routes
-  app.post('/api/orders', (req, res) => {
+  app.post('/api/orders', async (req, res) => {
     const { user_id, email, items, total, shipping_address, phone } = req.body;
     
-    const insertOrder = db.transaction(() => {
-      const result = db.prepare('INSERT INTO orders (user_id, email, total, shipping_address, phone) VALUES (?, ?, ?, ?, ?)').run(
-        user_id || null, email || null, total, shipping_address, phone
-      );
-      const orderId = result.lastInsertRowid;
-
-      const insertItem = db.prepare('INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)');
-      for (const item of items) {
-        insertItem.run(orderId, item.product_id, item.quantity, item.price);
-      }
-      return orderId;
-    });
-
+    const client = await pool.connect();
     try {
-      const orderId = insertOrder();
+      await client.query('BEGIN');
+      const result = await client.query(
+        'INSERT INTO orders (user_id, email, total, shipping_address, phone) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+        [user_id || null, email || null, total, shipping_address, phone]
+      );
+      const orderId = result.rows[0].id;
+
+      for (const item of items) {
+        await client.query(
+          'INSERT INTO order_items (order_id, product_id, quantity, price) VALUES ($1, $2, $3, $4)',
+          [orderId, item.product_id, item.quantity, item.price]
+        );
+      }
+      await client.query('COMMIT');
       res.json({ success: true, orderId });
     } catch (error) {
+      await client.query('ROLLBACK');
       console.error(error);
       res.status(500).json({ success: false, message: 'Lỗi tạo đơn hàng' });
+    } finally {
+      client.release();
     }
   });
 
-  app.get('/api/orders', (req, res) => {
-    const orders = db.prepare(`
-      SELECT o.*, u.name as user_name, u.email as user_email 
-      FROM orders o 
-      LEFT JOIN users u ON o.user_id = u.id
-      ORDER BY o.created_at DESC
-    `).all();
-    res.json(orders);
+  app.get('/api/orders', async (req, res) => {
+    try {
+      const ordersRes = await pool.query(`
+        SELECT o.*, u.name as user_name, u.email as user_email 
+        FROM orders o 
+        LEFT JOIN users u ON o.user_id = u.id
+        ORDER BY o.created_at DESC
+      `);
+      res.json(ordersRes.rows);
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Lỗi server' });
+    }
   });
 
-  app.get('/api/orders/:id/items', (req, res) => {
-    const items = db.prepare(`
-      SELECT oi.*, p.name as product_name, p.image as product_image
-      FROM order_items oi
-      LEFT JOIN products p ON oi.product_id = p.id
-      WHERE oi.order_id = ?
-    `).all(req.params.id);
-    res.json(items);
+  app.get('/api/orders/:id/items', async (req, res) => {
+    try {
+      const itemsRes = await pool.query(`
+        SELECT oi.*, p.name as product_name, p.image as product_image
+        FROM order_items oi
+        LEFT JOIN products p ON oi.product_id = p.id
+        WHERE oi.order_id = $1
+      `, [req.params.id]);
+      res.json(itemsRes.rows);
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Lỗi server' });
+    }
   });
 
-  app.put('/api/orders/:id/status', (req, res) => {
+  app.put('/api/orders/:id/status', async (req, res) => {
     const { status } = req.body;
-    db.prepare('UPDATE orders SET status = ? WHERE id = ?').run(status, req.params.id);
-    res.json({ success: true });
+    try {
+      await pool.query('UPDATE orders SET status = $1 WHERE id = $2', [status, req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Lỗi server' });
+    }
   });
 
   // Analytics Routes
-  app.get('/api/analytics', (req, res) => {
-    const totalRevenue = db.prepare("SELECT SUM(total) as sum FROM orders WHERE status != 'cancelled'").get() as any;
-    const orderCount = db.prepare("SELECT COUNT(*) as count FROM orders").get() as any;
-    const topProducts = db.prepare(`
-      SELECT p.name, SUM(oi.quantity) as sold
-      FROM order_items oi 
-      JOIN products p ON oi.product_id = p.id
-      JOIN orders o ON oi.order_id = o.id 
-      WHERE o.status != 'cancelled'
-      GROUP BY p.id 
-      ORDER BY sold DESC 
-      LIMIT 5
-    `).all();
-    res.json({ 
-      totalRevenue: totalRevenue.sum || 0, 
-      orderCount: orderCount.count || 0, 
-      topProducts 
-    });
+  app.get('/api/analytics', async (req, res) => {
+    try {
+      const totalRevenueRes = await pool.query("SELECT SUM(total) as sum FROM orders WHERE status != 'cancelled'");
+      const orderCountRes = await pool.query("SELECT COUNT(*) as count FROM orders");
+      const topProductsRes = await pool.query(`
+        SELECT p.name, SUM(oi.quantity) as sold
+        FROM order_items oi 
+        JOIN products p ON oi.product_id = p.id
+        JOIN orders o ON oi.order_id = o.id 
+        WHERE o.status != 'cancelled'
+        GROUP BY p.id 
+        ORDER BY sold DESC 
+        LIMIT 5
+      `);
+      res.json({ 
+        totalRevenue: totalRevenueRes.rows[0].sum || 0, 
+        orderCount: orderCountRes.rows[0].count || 0, 
+        topProducts: topProductsRes.rows 
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Lỗi server' });
+    }
   });
 
   // Customers Routes
-  app.get('/api/customers', (req, res) => {
-    const customers = db.prepare(`
-      SELECT u.id, u.name, u.email, COUNT(o.id) as order_count, SUM(o.total) as total_spent
-      FROM users u 
-      LEFT JOIN orders o ON u.id = o.user_id
-      WHERE u.role = 'user' 
-      GROUP BY u.id
-      ORDER BY total_spent DESC
-    `).all();
-    res.json(customers);
+  app.get('/api/customers', async (req, res) => {
+    try {
+      const customersRes = await pool.query(`
+        SELECT u.id, u.name, u.email, COUNT(o.id) as order_count, SUM(o.total) as total_spent
+        FROM users u 
+        LEFT JOIN orders o ON u.id = o.user_id
+        WHERE u.role = 'user' 
+        GROUP BY u.id
+        ORDER BY total_spent DESC
+      `);
+      res.json(customersRes.rows);
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Lỗi server' });
+    }
   });
 
-  app.get('/api/customers/:id/orders', (req, res) => {
-    const orders = db.prepare(`
-      SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC
-    `).all(req.params.id);
-    res.json(orders);
+  app.get('/api/customers/:id/orders', async (req, res) => {
+    try {
+      const ordersRes = await pool.query(`
+        SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC
+      `, [req.params.id]);
+      res.json(ordersRes.rows);
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Lỗi server' });
+    }
   });
 
   // Batches Routes
-  app.get('/api/batches', (req, res) => {
-    const batches = db.prepare(`
-      SELECT b.*, p.name as product_name 
-      FROM batches b 
-      LEFT JOIN products p ON b.product_id = p.id
-      ORDER BY b.production_date DESC
-    `).all();
-    res.json(batches);
+  app.get('/api/batches', async (req, res) => {
+    try {
+      const batchesRes = await pool.query(`
+        SELECT b.*, p.name as product_name 
+        FROM batches b 
+        LEFT JOIN products p ON b.product_id = p.id
+        ORDER BY b.production_date DESC
+      `);
+      res.json(batchesRes.rows);
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Lỗi server' });
+    }
   });
 
-  app.post('/api/batches', (req, res) => {
+  app.post('/api/batches', async (req, res) => {
     const { id, product_id, production_date, temperature_log, certificate_url, production_log } = req.body;
     try {
-      db.prepare("INSERT INTO batches (id, product_id, production_date, temperature_log, certificate_url, production_log) VALUES (?, ?, ?, ?, ?, ?)").run(
-        id, product_id, production_date, JSON.stringify(temperature_log), certificate_url, JSON.stringify(production_log || [])
+      await pool.query("INSERT INTO batches (id, product_id, production_date, temperature_log, certificate_url, production_log) VALUES ($1, $2, $3, $4, $5, $6)", 
+        [id, product_id, production_date, JSON.stringify(temperature_log), certificate_url, JSON.stringify(production_log || [])]
       );
       res.json({ success: true });
     } catch (error) {
@@ -304,20 +363,25 @@ async function startServer() {
     }
   });
 
-  app.get('/api/batches/:id', (req, res) => {
-    const batch = db.prepare(`
-      SELECT b.*, p.name as product_name 
-      FROM batches b 
-      LEFT JOIN products p ON b.product_id = p.id 
-      WHERE b.id = ?
-    `).get(req.params.id) as any;
-    
-    if (batch) {
-      batch.temperature_log = JSON.parse(batch.temperature_log);
-      batch.production_log = batch.production_log ? JSON.parse(batch.production_log) : [];
-      res.json({ success: true, batch });
-    } else {
-      res.status(404).json({ success: false, message: 'Không tìm thấy lô' });
+  app.get('/api/batches/:id', async (req, res) => {
+    try {
+      const batchRes = await pool.query(`
+        SELECT b.*, p.name as product_name 
+        FROM batches b 
+        LEFT JOIN products p ON b.product_id = p.id 
+        WHERE b.id = $1
+      `, [req.params.id]);
+      
+      const batch = batchRes.rows[0];
+      if (batch) {
+        batch.temperature_log = JSON.parse(batch.temperature_log);
+        batch.production_log = batch.production_log ? JSON.parse(batch.production_log) : [];
+        res.json({ success: true, batch });
+      } else {
+        res.status(404).json({ success: false, message: 'Không tìm thấy lô' });
+      }
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Lỗi server' });
     }
   });
 

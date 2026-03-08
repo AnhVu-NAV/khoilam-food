@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Package, Tag, ShoppingCart, QrCode, Printer, BarChart3, Users, FileText, Plus, Edit, Trash2, Download, X } from 'lucide-react';
+import { Package, Tag, ShoppingCart, QrCode, Printer, BarChart3, Users, FileText, Plus, Edit, Trash2, Download, X, Activity } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import IoTDashboard from '../components/admin/IoTDashboard';
 
 export default function Admin() {
   const { user } = useAuth();
@@ -33,36 +34,42 @@ export default function Admin() {
   const [couponForm, setCouponForm] = useState({ code: '', discount_percent: 0 });
 
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+  const [isBatchDetailModalOpen, setIsBatchDetailModalOpen] = useState(false);
+  const [selectedBatchDetail, setSelectedBatchDetail] = useState<any>(null);
   const [batchForm, setBatchForm] = useState<{
     id: string;
     product_id: string;
     production_date: string;
     certificate_url: string;
-    production_log: { date: string; title: string; description: string }[];
+    production_log: { date: string; title: string; description: string; image_url?: string }[];
   }>({ id: '', product_id: '', production_date: '', certificate_url: '', production_log: [] });
 
   const [expandedCustomer, setExpandedCustomer] = useState<number | null>(null);
   const [customerOrders, setCustomerOrders] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!user || user.role !== 'admin') {
+    if (!user || !['admin', 'seller', 'factory_manager'].includes(user.role)) {
       navigate('/');
       return;
+    }
+
+    if (user.role === 'factory_manager') {
+      setActiveTab('iot');
     }
 
     fetchData();
   }, [user, navigate]);
 
   const fetchData = async () => {
-    fetch('/api/products').then(res => res.json()).then(setProducts);
-    fetch('/api/orders').then(res => res.json()).then(setOrders);
-    fetch('/api/coupons').then(res => res.json()).then(setCoupons);
-    fetch('/api/customers').then(res => res.json()).then(setCustomers);
-    fetch('/api/batches').then(res => res.json()).then(setBatches);
+    fetch('/api/products').then(res => res.json()).then(data => setProducts(Array.isArray(data) ? data : []));
+    fetch('/api/orders').then(res => res.json()).then(data => setOrders(Array.isArray(data) ? data : []));
+    fetch('/api/coupons').then(res => res.json()).then(data => setCoupons(Array.isArray(data) ? data : []));
+    fetch('/api/customers').then(res => res.json()).then(data => setCustomers(Array.isArray(data) ? data : []));
+    fetch('/api/batches').then(res => res.json()).then(data => setBatches(Array.isArray(data) ? data : []));
     fetch('/api/analytics').then(res => res.json()).then(setAnalytics);
   };
 
-  if (!user || user.role !== 'admin') return null;
+  if (!user || !['admin', 'seller', 'factory_manager'].includes(user.role)) return null;
 
   const updateOrderStatus = async (id: number, status: string) => {
     await fetch(`/api/orders/${id}/status`, {
@@ -253,7 +260,7 @@ export default function Admin() {
   const addBatchLog = () => {
     setBatchForm({
       ...batchForm,
-      production_log: [...batchForm.production_log, { date: '', title: '', description: '' }]
+      production_log: [...batchForm.production_log, { date: '', title: '', description: '', image_url: '' }]
     });
   };
 
@@ -278,68 +285,86 @@ export default function Admin() {
           {/* Sidebar */}
           <div className="w-full md:w-64 shrink-0">
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-khoi-lam/5 space-y-2">
-              <button
-                onClick={() => setActiveTab('dashboard')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                  activeTab === 'dashboard' ? 'bg-vang-logo/20 text-khoi-lam font-bold' : 'text-khoi-lam/70 hover:bg-khoi-lam/5'
-                }`}
-              >
-                <BarChart3 className="w-5 h-5" /> Báo cáo
-              </button>
-              <button
-                onClick={() => setActiveTab('products')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                  activeTab === 'products' ? 'bg-vang-logo/20 text-khoi-lam font-bold' : 'text-khoi-lam/70 hover:bg-khoi-lam/5'
-                }`}
-              >
-                <Package className="w-5 h-5" /> Sản phẩm
-              </button>
-              <button
-                onClick={() => setActiveTab('orders')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                  activeTab === 'orders' ? 'bg-vang-logo/20 text-khoi-lam font-bold' : 'text-khoi-lam/70 hover:bg-khoi-lam/5'
-                }`}
-              >
-                <ShoppingCart className="w-5 h-5" /> Đơn hàng
-              </button>
-              <button
-                onClick={() => setActiveTab('coupons')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                  activeTab === 'coupons' ? 'bg-vang-logo/20 text-khoi-lam font-bold' : 'text-khoi-lam/70 hover:bg-khoi-lam/5'
-                }`}
-              >
-                <Tag className="w-5 h-5" /> Mã giảm giá
-              </button>
-              <button
-                onClick={() => setActiveTab('customers')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                  activeTab === 'customers' ? 'bg-vang-logo/20 text-khoi-lam font-bold' : 'text-khoi-lam/70 hover:bg-khoi-lam/5'
-                }`}
-              >
-                <Users className="w-5 h-5" /> Khách hàng
-              </button>
-              <button
-                onClick={() => setActiveTab('batches')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                  activeTab === 'batches' ? 'bg-vang-logo/20 text-khoi-lam font-bold' : 'text-khoi-lam/70 hover:bg-khoi-lam/5'
-                }`}
-              >
-                <FileText className="w-5 h-5" /> Lô sản xuất
-              </button>
-              <button
-                onClick={() => setActiveTab('qrcode')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                  activeTab === 'qrcode' ? 'bg-vang-logo/20 text-khoi-lam font-bold' : 'text-khoi-lam/70 hover:bg-khoi-lam/5'
-                }`}
-              >
-                <QrCode className="w-5 h-5" /> Tạo mã QR
-              </button>
+              {['admin', 'seller'].includes(user.role) && (
+                <>
+                  <button
+                    onClick={() => setActiveTab('dashboard')}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                      activeTab === 'dashboard' ? 'bg-vang-logo/20 text-khoi-lam font-bold' : 'text-khoi-lam/70 hover:bg-khoi-lam/5'
+                    }`}
+                  >
+                    <BarChart3 className="w-5 h-5" /> Báo cáo
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('products')}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                      activeTab === 'products' ? 'bg-vang-logo/20 text-khoi-lam font-bold' : 'text-khoi-lam/70 hover:bg-khoi-lam/5'
+                    }`}
+                  >
+                    <Package className="w-5 h-5" /> Sản phẩm
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('orders')}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                      activeTab === 'orders' ? 'bg-vang-logo/20 text-khoi-lam font-bold' : 'text-khoi-lam/70 hover:bg-khoi-lam/5'
+                    }`}
+                  >
+                    <ShoppingCart className="w-5 h-5" /> Đơn hàng
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('coupons')}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                      activeTab === 'coupons' ? 'bg-vang-logo/20 text-khoi-lam font-bold' : 'text-khoi-lam/70 hover:bg-khoi-lam/5'
+                    }`}
+                  >
+                    <Tag className="w-5 h-5" /> Mã giảm giá
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('customers')}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                      activeTab === 'customers' ? 'bg-vang-logo/20 text-khoi-lam font-bold' : 'text-khoi-lam/70 hover:bg-khoi-lam/5'
+                    }`}
+                  >
+                    <Users className="w-5 h-5" /> Khách hàng
+                  </button>
+                </>
+              )}
+              {['admin', 'seller', 'factory_manager'].includes(user.role) && (
+                <>
+                  <button
+                    onClick={() => setActiveTab('iot')}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                      activeTab === 'iot' ? 'bg-vang-logo/20 text-khoi-lam font-bold' : 'text-khoi-lam/70 hover:bg-khoi-lam/5'
+                    }`}
+                  >
+                    <Activity className="w-5 h-5" /> Bảng điều khiển IoT
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('batches')}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                      activeTab === 'batches' ? 'bg-vang-logo/20 text-khoi-lam font-bold' : 'text-khoi-lam/70 hover:bg-khoi-lam/5'
+                    }`}
+                  >
+                    <FileText className="w-5 h-5" /> Lô sản xuất
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('qrcode')}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                      activeTab === 'qrcode' ? 'bg-vang-logo/20 text-khoi-lam font-bold' : 'text-khoi-lam/70 hover:bg-khoi-lam/5'
+                    }`}
+                  >
+                    <QrCode className="w-5 h-5" /> Tạo mã QR
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
           {/* Content */}
           <div className="flex-grow bg-white rounded-3xl p-8 shadow-sm border border-khoi-lam/5">
             
+            {activeTab === 'iot' && <IoTDashboard />}
+
             {activeTab === 'dashboard' && (
               <div>
                 <h2 className="font-serif text-2xl font-bold text-khoi-lam mb-6">Báo cáo & Thống kê</h2>
@@ -662,6 +687,7 @@ export default function Admin() {
                         <th className="pb-4 font-medium">Sản phẩm</th>
                         <th className="pb-4 font-medium">Ngày SX</th>
                         <th className="pb-4 font-medium">Kiểm định</th>
+                        <th className="pb-4 font-medium text-right">Thao tác</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-khoi-lam/5">
@@ -671,6 +697,25 @@ export default function Admin() {
                           <td className="py-4 text-khoi-lam/70">{b.product_name}</td>
                           <td className="py-4 text-khoi-lam/70">{b.production_date}</td>
                           <td className="py-4 text-xanh-rung font-medium">{b.certificate_url}</td>
+                          <td className="py-4 text-right">
+                            <button 
+                              onClick={() => {
+                                let parsedLog = b.production_log;
+                                if (typeof parsedLog === 'string') {
+                                  try {
+                                    parsedLog = JSON.parse(parsedLog);
+                                  } catch (e) {
+                                    parsedLog = [];
+                                  }
+                                }
+                                setSelectedBatchDetail({ ...b, production_log: parsedLog });
+                                setIsBatchDetailModalOpen(true);
+                              }}
+                              className="text-vang-logo hover:underline font-medium"
+                            >
+                              Xem chi tiết
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -934,6 +979,11 @@ export default function Admin() {
                           value={log.description} onChange={e => updateBatchLog(index, 'description', e.target.value)} 
                           className="w-full px-3 py-1.5 text-sm border border-khoi-lam/20 rounded-lg focus:outline-none focus:border-vang-logo" 
                         />
+                        <input 
+                          type="text" placeholder="URL Hình ảnh minh họa (Tùy chọn)" 
+                          value={log.image_url || ''} onChange={e => updateBatchLog(index, 'image_url', e.target.value)} 
+                          className="w-full px-3 py-1.5 text-sm border border-khoi-lam/20 rounded-lg focus:outline-none focus:border-vang-logo" 
+                        />
                       </div>
                       <button type="button" onClick={() => removeBatchLog(index)} className="p-2 text-do-gach hover:bg-do-gach/10 rounded-lg">
                         <Trash2 className="w-4 h-4" />
@@ -950,6 +1000,57 @@ export default function Admin() {
                 Tạo lô
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Batch Detail Modal */}
+      {isBatchDetailModalOpen && selectedBatchDetail && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-serif text-2xl font-bold text-khoi-lam">Chi tiết lô: {selectedBatchDetail.id}</h3>
+              <button onClick={() => setIsBatchDetailModalOpen(false)} className="text-khoi-lam/60 hover:text-khoi-lam"><X className="w-6 h-6" /></button>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-kem/30 p-4 rounded-xl border border-khoi-lam/10">
+                  <p className="text-sm text-khoi-lam/60 mb-1">Sản phẩm</p>
+                  <p className="font-bold text-khoi-lam">{selectedBatchDetail.product_name}</p>
+                </div>
+                <div className="bg-kem/30 p-4 rounded-xl border border-khoi-lam/10">
+                  <p className="text-sm text-khoi-lam/60 mb-1">Ngày sản xuất</p>
+                  <p className="font-bold text-khoi-lam">{selectedBatchDetail.production_date}</p>
+                </div>
+                <div className="bg-kem/30 p-4 rounded-xl border border-khoi-lam/10">
+                  <p className="text-sm text-khoi-lam/60 mb-1">Giấy kiểm định</p>
+                  <p className="font-bold text-xanh-rung">{selectedBatchDetail.certificate_url || 'Chưa có'}</p>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-khoi-lam mb-4">Nhật ký sản xuất</h4>
+                {selectedBatchDetail.production_log && selectedBatchDetail.production_log.length > 0 ? (
+                  <div className="space-y-4">
+                    {selectedBatchDetail.production_log.map((log: any, index: number) => (
+                      <div key={index} className="bg-kem/30 p-4 rounded-xl border border-khoi-lam/10">
+                        <div className="flex justify-between items-start mb-2">
+                          <h5 className="font-bold text-khoi-lam">{log.title}</h5>
+                          <span className="text-sm text-khoi-lam/60">{log.date}</span>
+                        </div>
+                        <p className="text-sm text-khoi-lam/80">{log.description}</p>
+                        {log.image_url && (
+                          <img src={log.image_url} alt={log.title} className="mt-3 rounded-lg max-h-32 object-cover" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-khoi-lam/60 italic">Chưa có nhật ký sản xuất.</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

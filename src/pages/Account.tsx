@@ -16,9 +16,18 @@ export default function Account() {
       fetch('/api/orders')
         .then(res => res.json())
         .then(data => {
-          // Filter orders for the current user by ID or Email
-          const userOrders = data.filter((o: any) => o.user_id === user.id || o.email === user.email);
-          setOrders(userOrders);
+          if (Array.isArray(data)) {
+            // Filter orders for the current user by ID or Email
+            const userOrders = data.filter((o: any) => o.user_id === user.id || o.email === user.email);
+            setOrders(userOrders);
+          } else {
+            console.error('Expected array of orders, got:', data);
+            setOrders([]);
+          }
+        })
+        .catch(err => {
+          console.error('Error fetching orders:', err);
+          setOrders([]);
         });
     }
   }, [user, navigate]);

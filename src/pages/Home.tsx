@@ -111,29 +111,45 @@ export default function Home() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {featuredProducts.map((product) => (
-              <Link to={`/san-pham/${product.id}`} key={product.id} className="group flex flex-col">
-                <div className="aspect-[4/5] overflow-hidden rounded-2xl mb-6 bg-kem relative">
+              <Link to={`/san-pham/${product.id}`} key={product.id} className="group flex flex-col bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-khoi-lam/5 h-full">
+                <div className="aspect-[4/5] overflow-hidden bg-kem relative">
                   <img 
                     src={product.image} 
                     alt={product.name} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                     referrerPolicy="no-referrer"
                   />
-                  <div className="absolute top-4 left-4 bg-kem/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-khoi-lam">
+                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-khoi-lam shadow-sm">
                     {product.category}
                   </div>
+                  {product.stock <= 0 && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">
+                      <span className="bg-white text-do-gach px-4 py-2 rounded-full font-bold text-sm shadow-lg">Hết hàng</span>
+                    </div>
+                  )}
                 </div>
-                <h3 className="font-serif text-xl font-semibold text-khoi-lam mb-2 group-hover:text-xanh-rung transition-colors">
-                  {product.name}
-                </h3>
-                <p className="text-khoi-lam/60 text-sm line-clamp-2 mb-4 flex-grow">
-                  {product.description}
-                </p>
-                <div className="flex justify-between items-center mt-auto pt-4 border-t border-khoi-lam/10">
-                  <span className="font-medium text-lg text-khoi-lam">
-                    {product.price.toLocaleString('vi-VN')}đ
-                  </span>
-                  <span className="text-sm text-khoi-lam/50">Từ {product.weights[0]}</span>
+                
+                <div className="p-6 flex flex-col flex-grow">
+                  <h3 className="font-serif text-xl font-semibold text-khoi-lam mb-2 group-hover:text-xanh-rung transition-colors">
+                    {product.name}
+                  </h3>
+                  <p className="text-khoi-lam/60 text-sm line-clamp-2 mb-6 flex-grow">
+                    {product.description}
+                  </p>
+                  
+                  <div className="flex justify-between items-center pt-4 border-t border-khoi-lam/10 mt-auto">
+                    <div className="flex flex-col">
+                      <span className="text-xs text-khoi-lam/50 block mb-0.5">Giá từ</span>
+                      <span className="font-semibold text-lg text-khoi-lam">
+                        {product.price.toLocaleString('vi-VN')}đ
+                      </span>
+                    </div>
+                    {Array.isArray(product.weights) && product.weights.length > 0 && (
+                      <div className="bg-khoi-lam/5 text-khoi-lam px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide">
+                        {product.weights[0].trim()}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </Link>
             ))}
@@ -163,17 +179,10 @@ export default function Home() {
                 Không chỉ là lời hứa. Khói Lam số hoá toàn bộ quy trình sản xuất. Nhập mã lô trên bao bì để xem hành trình từ bản làng đến bàn ăn của bạn.
               </p>
               
-              <div className="bg-kem/5 border border-kem/10 rounded-2xl p-6 backdrop-blur-md mb-8">
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <input 
-                    type="text" 
-                    placeholder="Nhập mã lô (VD: KL-TRB-2026-01)" 
-                    className="flex-grow bg-white/10 border border-kem/20 rounded-xl px-4 py-3 text-kem placeholder:text-kem/40 focus:outline-none focus:border-vang-logo transition-colors"
-                  />
-                  <Link to="/truy-xuat" className="bg-vang-logo text-khoi-lam px-6 py-3 rounded-xl font-bold hover:bg-vang-logo/90 transition-colors whitespace-nowrap text-center">
-                    Truy xuất ngay
-                  </Link>
-                </div>
+              <div className="mb-8">
+                <Link to="/truy-xuat" className="inline-block bg-vang-logo text-khoi-lam px-8 py-4 rounded-xl font-bold hover:bg-vang-logo/90 transition-colors text-center text-lg shadow-lg shadow-vang-logo/20">
+                  Truy xuất ngay
+                </Link>
               </div>
               
               <ul className="space-y-4">

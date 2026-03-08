@@ -18,11 +18,16 @@ export default function ProductDetail() {
     fetch('/api/products')
       .then(res => res.json())
       .then(data => {
-        setAllProducts(data);
-        const foundProduct = data.find((p: any) => p.id === id);
-        setProduct(foundProduct);
-        if (foundProduct && foundProduct.weights && foundProduct.weights.length > 0) {
-          setSelectedWeight(foundProduct.weights[0]);
+        if (Array.isArray(data)) {
+          setAllProducts(data);
+          const foundProduct = data.find((p: any) => p.id === id);
+          setProduct(foundProduct);
+          if (foundProduct && foundProduct.weights && foundProduct.weights.length > 0) {
+            setSelectedWeight(foundProduct.weights[0]);
+          }
+        } else {
+          console.error('Expected array of products, got:', data);
+          setAllProducts([]);
         }
         setLoading(false);
       })
@@ -147,29 +152,55 @@ export default function ProductDetail() {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {suggestedProducts.map((suggested) => (
-                <div key={suggested.id} className="bg-white rounded-3xl p-6 shadow-sm border border-khoi-lam/5 flex flex-col">
-                  <Link to={`/san-pham/${suggested.id}`} className="block aspect-square rounded-2xl overflow-hidden mb-6">
-                    <img src={suggested.image} alt={suggested.name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" />
+                <div key={suggested.id} className="group flex flex-col bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-khoi-lam/5 h-full">
+                  <Link to={`/san-pham/${suggested.id}`} className="aspect-[4/5] overflow-hidden bg-kem relative block">
+                    <img 
+                      src={suggested.image} 
+                      alt={suggested.name} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-khoi-lam shadow-sm">
+                      {suggested.category}
+                    </div>
                   </Link>
-                  <div className="flex-grow">
-                    <span className="text-xanh-rung text-xs font-semibold uppercase tracking-wider mb-2 block">{suggested.category}</span>
+                  
+                  <div className="p-6 flex flex-col flex-grow">
                     <Link to={`/san-pham/${suggested.id}`}>
-                      <h3 className="font-serif text-xl font-bold text-khoi-lam mb-2 hover:text-vang-logo transition-colors">{suggested.name}</h3>
+                      <h3 className="font-serif text-xl font-semibold text-khoi-lam mb-2 group-hover:text-xanh-rung transition-colors">
+                        {suggested.name}
+                      </h3>
                     </Link>
-                    <p className="text-khoi-lam/60 text-sm line-clamp-2 mb-4">{suggested.description}</p>
-                  </div>
-                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-khoi-lam/10">
-                    <span className="font-bold text-do-gach text-lg">{suggested.price.toLocaleString('vi-VN')}đ</span>
-                    <button 
-                      onClick={() => {
-                        addToCart(suggested, 1, suggested.weights[0]);
-                        alert(`Đã thêm ${suggested.name} vào giỏ hàng!`);
-                      }}
-                      className="bg-khoi-lam/5 text-khoi-lam p-3 rounded-xl hover:bg-vang-logo hover:text-khoi-lam transition-colors"
-                      title="Thêm vào giỏ"
-                    >
-                      <Plus className="w-5 h-5" />
-                    </button>
+                    <p className="text-khoi-lam/60 text-sm line-clamp-2 mb-6 flex-grow">
+                      {suggested.description}
+                    </p>
+                    
+                    <div className="flex justify-between items-center pt-4 border-t border-khoi-lam/10 mt-auto">
+                      <div className="flex flex-col">
+                        <span className="text-xs text-khoi-lam/50 block mb-0.5">Giá từ</span>
+                        <span className="font-semibold text-lg text-khoi-lam">
+                          {suggested.price.toLocaleString('vi-VN')}đ
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {Array.isArray(suggested.weights) && suggested.weights.length > 0 && (
+                          <div className="bg-khoi-lam/5 text-khoi-lam px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide">
+                            {suggested.weights[0].trim()}
+                          </div>
+                        )}
+                        <button 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            addToCart(suggested, 1, suggested.weights[0]);
+                            alert(`Đã thêm ${suggested.name} vào giỏ hàng!`);
+                          }}
+                          className="bg-khoi-lam text-white p-2 rounded-lg hover:bg-xanh-rung transition-colors shadow-sm"
+                          title="Thêm vào giỏ"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}

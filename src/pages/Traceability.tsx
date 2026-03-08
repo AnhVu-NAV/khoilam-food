@@ -177,6 +177,9 @@ export default function Traceability() {
                           <p className={`text-sm font-bold mb-1 ${index === batchData.production_log.length - 1 ? 'text-khoi-lam/50' : 'text-xanh-rung'}`}>{log.date}</p>
                           <h4 className="font-semibold text-khoi-lam text-lg mb-2">{log.title}</h4>
                           <p className="text-khoi-lam/70 text-sm">{log.description}</p>
+                          {log.image_url && (
+                            <img src={log.image_url} alt={log.title} className="mt-3 rounded-xl w-full max-h-48 object-cover border border-khoi-lam/10" referrerPolicy="no-referrer" />
+                          )}
                         </div>
                       ))
                     ) : (
@@ -281,7 +284,6 @@ export default function Traceability() {
                     }
                   }}
                   components={{
-                    audio: false,
                     finder: false,
                   }}
                   styles={{
