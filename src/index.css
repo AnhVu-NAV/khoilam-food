@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Cormorant Garamond", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+
+  --color-khoi-lam: #1A4321;
+  --color-vang-logo: #F4CE6A;
+  --color-kem: #FDF9EE;
+  --color-xanh-rung: #2A6B38;
+  --color-do-gach: #991B1B;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-kem);
+  color: var(--color-khoi-lam);
+  font-family: var(--font-sans);
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-kem);
+  color: var(--color-khoi-lam);
+  font-family: var(--font-sans);
+  display: flex;
+  flex-direction: column;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+}
