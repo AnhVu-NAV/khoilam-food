@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
-import { Activity, Thermometer, Droplets, Wind, AlertTriangle, CheckCircle2, Clock, ChevronRight, ArrowLeft, Camera, Plus, Settings } from 'lucide-react';
+import { Activity, Thermometer, Droplets, Wind, AlertTriangle, CheckCircle2, Clock, ChevronRight, ArrowLeft, Camera, Plus, Settings, Package } from 'lucide-react';
 
 const mockTempData = [
   { time: '0h', temp: 25, humidity: 48, smoke: 85 },
@@ -27,9 +27,11 @@ const mockDetailedTempData = [
   { time: '15:30', temp: 76, humidity: 49, smoke: 85 },
 ];
 
-export default function IoTDashboard() {
+export default function IoTDashboard({ user }: { user?: any }) {
   const [view, setView] = useState<'overview' | 'batch_detail' | 'alert_detail'>('overview');
   const [selectedBatch, setSelectedBatch] = useState<string | null>(null);
+  const [targetTemp, setTargetTemp] = useState(75);
+  const [inventory, setInventory] = useState({ meat: 500, spices: 50, wood: 200 });
 
   const renderOverview = () => (
     <div className="space-y-6">
@@ -40,6 +42,66 @@ export default function IoTDashboard() {
           <p className="text-sm text-khoi-lam/60">Thứ Năm, 05/03/2026 - 15:30</p>
         </div>
       </div>
+
+      {user && ['admin', 'seller'].includes(user.role) && (
+        <div className="bg-kem/30 p-6 rounded-3xl shadow-sm border border-khoi-lam/5">
+          <h3 className="font-bold text-khoi-lam mb-4">Quản lý Nhiệt độ & Kho nguyên liệu</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white p-4 rounded-2xl border border-khoi-lam/10">
+              <h4 className="font-medium text-khoi-lam mb-4 flex items-center gap-2"><Thermometer className="w-5 h-5 text-vang-logo" /> Điều chỉnh nhiệt độ mục tiêu</h4>
+              <div className="flex items-center gap-4">
+                <input 
+                  type="range" 
+                  min="50" max="100" 
+                  value={targetTemp} 
+                  onChange={(e) => setTargetTemp(Number(e.target.value))}
+                  className="w-full accent-vang-logo"
+                />
+                <span className="font-bold text-xl text-khoi-lam w-16 text-center">{targetTemp}°C</span>
+              </div>
+              <button className="mt-4 w-full bg-vang-logo text-khoi-lam py-2 rounded-xl font-bold hover:bg-vang-logo/90 transition-colors">
+                Cập nhật nhiệt độ
+              </button>
+            </div>
+            
+            <div className="bg-white p-4 rounded-2xl border border-khoi-lam/10">
+              <h4 className="font-medium text-khoi-lam mb-4 flex items-center gap-2"><Package className="w-5 h-5 text-xanh-rung" /> Quản lý kho nguyên liệu</h4>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-khoi-lam/70">Thịt tươi (kg)</span>
+                  <input 
+                    type="number" 
+                    value={inventory.meat} 
+                    onChange={(e) => setInventory({...inventory, meat: Number(e.target.value)})}
+                    className="w-24 p-1 border border-khoi-lam/20 rounded text-right"
+                  />
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-khoi-lam/70">Gia vị (kg)</span>
+                  <input 
+                    type="number" 
+                    value={inventory.spices} 
+                    onChange={(e) => setInventory({...inventory, spices: Number(e.target.value)})}
+                    className="w-24 p-1 border border-khoi-lam/20 rounded text-right"
+                  />
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-khoi-lam/70">Củi nhãn (kg)</span>
+                  <input 
+                    type="number" 
+                    value={inventory.wood} 
+                    onChange={(e) => setInventory({...inventory, wood: Number(e.target.value)})}
+                    className="w-24 p-1 border border-khoi-lam/20 rounded text-right"
+                  />
+                </div>
+              </div>
+              <button className="mt-4 w-full bg-xanh-rung text-white py-2 rounded-xl font-bold hover:bg-xanh-rung/90 transition-colors">
+                Cập nhật kho
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-kem/30 p-4 rounded-2xl border border-khoi-lam/10 text-center">

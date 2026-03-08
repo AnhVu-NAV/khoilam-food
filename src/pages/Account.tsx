@@ -44,6 +44,27 @@ export default function Account() {
     }
   };
 
+  const cancelOrder = async (orderId: number) => {
+    const confirmCancel = window.confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?');
+    if (!confirmCancel) return;
+
+    try {
+      const res = await fetch(`/api/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'cancelled', cancel_reason: 'Khách hàng tự hủy' })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setOrders(orders.map((o: any) => o.id === orderId ? { ...o, status: 'cancelled', cancel_reason: 'Khách hàng tự hủy' } : o));
+      } else {
+        alert('Có lỗi xảy ra khi hủy đơn hàng.');
+      }
+    } catch (error) {
+      alert('Lỗi kết nối.');
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -133,6 +154,24 @@ export default function Account() {
                           <p className="text-sm text-khoi-lam/70 mb-1"><span className="font-medium">Giao đến:</span> {order.shipping_address}</p>
                           <p className="text-sm text-khoi-lam/70"><span className="font-medium">Số điện thoại:</span> {order.phone}</p>
                         </div>
+                        
+                        {order.status === 'cancelled' && order.cancel_reason && (
+                          <div className="mt-4 p-4 bg-do-gach/10 rounded-xl border border-do-gach/20">
+                            <p className="text-sm text-do-gach/80 mb-1 font-medium">Lý do hủy đơn</p>
+                            <p className="text-do-gach text-sm">{order.cancel_reason}</p>
+                          </div>
+                        )}
+
+                        {order.status === 'pending' && (
+                          <div className="mt-6 text-right">
+                            <button
+                              onClick={() => cancelOrder(order.id)}
+                              className="px-4 py-2 bg-do-gach text-white rounded-xl text-sm font-bold hover:bg-do-gach/90 transition-colors"
+                            >
+                              Hủy đơn hàng
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

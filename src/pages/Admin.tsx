@@ -34,6 +34,7 @@ export default function Admin() {
   const [couponForm, setCouponForm] = useState({ code: '', discount_percent: 0 });
 
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+  const [editingBatch, setEditingBatch] = useState<any>(null);
   const [isBatchDetailModalOpen, setIsBatchDetailModalOpen] = useState(false);
   const [selectedBatchDetail, setSelectedBatchDetail] = useState<any>(null);
   const [batchForm, setBatchForm] = useState<{
@@ -72,12 +73,18 @@ export default function Admin() {
   if (!user || !['admin', 'seller', 'factory_manager'].includes(user.role)) return null;
 
   const updateOrderStatus = async (id: number, status: string) => {
+    let cancel_reason = null;
+    if (status === 'cancelled') {
+      cancel_reason = prompt('Vui lòng nhập lý do hủy đơn hàng:');
+      if (cancel_reason === null) return; // User cancelled the prompt
+    }
+    
     await fetch(`/api/orders/${id}/status`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status })
+      body: JSON.stringify({ status, cancel_reason })
     });
-    setOrders(orders.map((o: any) => o.id === id ? { ...o, status } : o));
+    setOrders(orders.map((o: any) => o.id === id ? { ...o, status, cancel_reason } : o));
   };
 
   const toggleOrderDetails = async (orderId: number) => {
@@ -122,7 +129,7 @@ export default function Admin() {
     };
     
     const method = editingProduct ? 'PUT' : 'POST';
-    const url = editingProduct ? `/api/products/${productForm.id}` : '/api/products';
+    const url = editingProduct ? `/api/products/${encodeURIComponent(productForm.id)}` : '/api/products';
     
     const res = await fetch(url, {
       method,
@@ -140,8 +147,20 @@ export default function Admin() {
 
   const handleDeleteProduct = async (id: string) => {
     if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
-      await fetch(`/api/products/${id}`, { method: 'DELETE' });
-      fetchData();
+      try {
+        const res = await fetch(`/api/products/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        if (!res.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data = await res.json();
+        if (data.success) {
+          fetchData();
+        } else {
+          alert(data.message || 'Không thể xóa sản phẩm. Có thể sản phẩm đang nằm trong đơn hàng hoặc lô sản xuất.');
+        }
+      } catch (error) {
+        alert('Lỗi kết nối khi xóa sản phẩm');
+      }
     }
   };
 
@@ -225,6 +244,31 @@ export default function Admin() {
   };
 
   // Batch Handlers
+  const openBatchModal = (batch?: any) => {
+    if (batch) {
+      setEditingBatch(batch);
+      let parsedLog = batch.production_log;
+      if (typeof parsedLog === 'string') {
+        try {
+          parsedLog = JSON.parse(parsedLog);
+        } catch (e) {
+          parsedLog = [];
+        }
+      }
+      setBatchForm({
+        id: batch.id,
+        product_id: batch.product_id,
+        production_date: batch.production_date,
+        certificate_url: batch.certificate_url || '',
+        production_log: parsedLog || []
+      });
+    } else {
+      setEditingBatch(null);
+      setBatchForm({ id: '', product_id: '', production_date: '', certificate_url: '', production_log: [] });
+    }
+    setIsBatchModalOpen(true);
+  };
+
   const handleSaveBatch = async (e: React.FormEvent) => {
     e.preventDefault();
     // Generate mock temperature log for simplicity
@@ -242,8 +286,11 @@ export default function Admin() {
       temperature_log: mockTempLog
     };
 
-    const res = await fetch('/api/batches', {
-      method: 'POST',
+    const method = editingBatch ? 'PUT' : 'POST';
+    const url = editingBatch ? `/api/batches/${encodeURIComponent(batchForm.id)}` : '/api/batches';
+
+    const res = await fetch(url, {
+      method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
@@ -251,9 +298,29 @@ export default function Admin() {
     if (res.ok) {
       setIsBatchModalOpen(false);
       setBatchForm({ id: '', product_id: '', production_date: '', certificate_url: '', production_log: [] });
+      setEditingBatch(null);
       fetchData();
     } else {
-      alert('Có lỗi xảy ra khi tạo lô');
+      alert('Có lỗi xảy ra khi lưu lô');
+    }
+  };
+
+  const handleDeleteBatch = async (id: string) => {
+    if (confirm('Bạn có chắc chắn muốn xóa lô sản xuất này?')) {
+      try {
+        const res = await fetch(`/api/batches/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        if (!res.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data = await res.json();
+        if (data.success) {
+          fetchData();
+        } else {
+          alert(data.message || 'Không thể xóa lô sản xuất.');
+        }
+      } catch (error) {
+        alert('Lỗi kết nối khi xóa lô sản xuất');
+      }
     }
   };
 
@@ -363,7 +430,7 @@ export default function Admin() {
           {/* Content */}
           <div className="flex-grow bg-white rounded-3xl p-8 shadow-sm border border-khoi-lam/5">
             
-            {activeTab === 'iot' && <IoTDashboard />}
+            {activeTab === 'iot' && <IoTDashboard user={user} />}
 
             {activeTab === 'dashboard' && (
               <div>
@@ -528,6 +595,12 @@ export default function Admin() {
                                       <p className="text-sm text-khoi-lam/60 mb-1">Địa chỉ giao hàng</p>
                                       <p className="font-medium text-khoi-lam">{o.shipping_address}</p>
                                     </div>
+                                    {o.status === 'cancelled' && o.cancel_reason && (
+                                      <div className="col-span-1 md:col-span-2 mt-2 p-3 bg-do-gach/10 rounded-xl border border-do-gach/20">
+                                        <p className="text-sm text-do-gach/80 mb-1 font-medium">Lý do hủy đơn</p>
+                                        <p className="text-do-gach">{o.cancel_reason}</p>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </td>
@@ -673,7 +746,7 @@ export default function Admin() {
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="font-serif text-2xl font-bold text-khoi-lam">Quản lý lô sản xuất (Batch)</h2>
                   <button 
-                    onClick={() => setIsBatchModalOpen(true)}
+                    onClick={() => openBatchModal()}
                     className="bg-vang-logo text-khoi-lam px-4 py-2 rounded-xl font-bold hover:bg-vang-logo/90 transition-colors flex items-center gap-2"
                   >
                     <Plus className="w-4 h-4" /> Tạo lô mới
@@ -711,10 +784,12 @@ export default function Admin() {
                                 setSelectedBatchDetail({ ...b, production_log: parsedLog });
                                 setIsBatchDetailModalOpen(true);
                               }}
-                              className="text-vang-logo hover:underline font-medium"
+                              className="text-vang-logo hover:underline font-medium mr-4"
                             >
                               Xem chi tiết
                             </button>
+                            <button onClick={() => openBatchModal(b)} className="text-xanh-rung hover:underline mr-4"><Edit className="w-4 h-4 inline" /></button>
+                            <button onClick={() => handleDeleteBatch(b.id)} className="text-do-gach hover:underline"><Trash2 className="w-4 h-4 inline" /></button>
                           </td>
                         </tr>
                       ))}
@@ -922,14 +997,14 @@ export default function Admin() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-serif text-2xl font-bold text-khoi-lam">Tạo lô sản xuất mới</h3>
+              <h3 className="font-serif text-2xl font-bold text-khoi-lam">{editingBatch ? 'Sửa lô sản xuất' : 'Tạo lô sản xuất mới'}</h3>
               <button onClick={() => setIsBatchModalOpen(false)} className="text-khoi-lam/60 hover:text-khoi-lam"><X className="w-6 h-6" /></button>
             </div>
             <form onSubmit={handleSaveBatch} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-khoi-lam mb-1">Mã lô (VD: KL-TRB-2026-02)</label>
-                  <input required type="text" value={batchForm.id} onChange={e => setBatchForm({...batchForm, id: e.target.value})} className="w-full px-4 py-2 border border-khoi-lam/20 rounded-xl focus:outline-none focus:border-vang-logo" />
+                  <input required type="text" value={batchForm.id} disabled={!!editingBatch} onChange={e => setBatchForm({...batchForm, id: e.target.value})} className="w-full px-4 py-2 border border-khoi-lam/20 rounded-xl focus:outline-none focus:border-vang-logo disabled:bg-gray-100" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-khoi-lam mb-1">Sản phẩm</label>

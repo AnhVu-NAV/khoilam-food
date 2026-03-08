@@ -6,12 +6,16 @@ import { Mail, X } from 'lucide-react';
 
 export default function Checkout() {
   const { items, total, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
-  const [address, setAddress] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState(user?.email || '');
-  const [name, setName] = useState(user?.name || '');
+  
+  // Try to get saved guest info from localStorage
+  const savedGuestInfo = JSON.parse(localStorage.getItem('guestInfo') || '{}');
+  
+  const [address, setAddress] = useState(user?.address || savedGuestInfo.address || '');
+  const [phone, setPhone] = useState(user?.phone || savedGuestInfo.phone || '');
+  const [email, setEmail] = useState(user?.email || savedGuestInfo.email || '');
+  const [name, setName] = useState(user?.name || savedGuestInfo.name || '');
   const [loading, setLoading] = useState(false);
   const [showFakeEmail, setShowFakeEmail] = useState(false);
   const [orderId, setOrderId] = useState<number | null>(null);
@@ -45,6 +49,11 @@ export default function Checkout() {
 
       const data = await res.json();
       if (data.success) {
+        if (user) {
+          login({ ...user, address, phone });
+        } else {
+          localStorage.setItem('guestInfo', JSON.stringify({ name, email, phone, address }));
+        }
         setOrderId(data.orderId || Math.floor(Math.random() * 10000) + 1000);
         setShowFakeEmail(true);
         clearCart();
