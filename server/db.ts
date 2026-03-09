@@ -11,10 +11,7 @@ declare global {
   var __khoiLamInitPromise: Promise<void> | undefined;
 }
 
-const connectionString =
-  process.env.DATABASE_URL ||
-  process.env.POSTGRES_URL ||
-  process.env.POSTGRES_URL_NON_POOLING;
+const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
     console.error('Thiếu DATABASE_URL hoặc POSTGRES_URL. Hãy kết nối Neon/Postgres vào project Vercel.')
