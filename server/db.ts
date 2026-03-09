@@ -17,6 +17,7 @@ const connectionString =
   process.env.POSTGRES_URL_NON_POOLING;
 
 if (!connectionString) {
+    console.error('Thiếu DATABASE_URL hoặc POSTGRES_URL. Hãy kết nối Neon/Postgres vào project Vercel.')
   throw new Error(
     'Thiếu DATABASE_URL hoặc POSTGRES_URL. Hãy kết nối Neon/Postgres vào project Vercel.'
   );
