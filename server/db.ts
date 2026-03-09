@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { Pool } from 'pg';
-import { products } from '../src/data/products';
+import { products } from '../src/data/products.js';
 
 type QueryResultRow = Record<string, unknown>;
 
