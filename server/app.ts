@@ -768,4 +768,12 @@ app.use((error: any, _req: express.Request, res: express.Response, _next: expres
   });
 });
 
+app.all('/api/debug', async (req, res) => {
+    return res.json({
+        ok: true,
+        method: req.method,
+        url: req.url,
+    });
+});
+
 export default app;
