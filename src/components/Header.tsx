@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Menu, Search, User, LogOut, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import logo from '../assets/logo.png';
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -26,12 +27,17 @@ export default function Header() {
             >
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
-            <Link to="/" className="font-serif text-2xl font-bold tracking-tight text-khoi-lam flex items-center gap-2">
-              <div className="w-8 h-8 bg-vang-logo rounded-md flex items-center justify-center">
-                <span className="text-khoi-lam font-bold text-lg leading-none">KL</span>
-              </div>
-              Khói Lam
-            </Link>
+              <Link
+                  to="/"
+                  className="font-serif text-2xl font-bold tracking-tight text-khoi-lam flex items-center gap-3"
+              >
+                  <img
+                      src={logo}
+                      alt="Khói Lam"
+                      className="h-10 w-auto"
+                  />
+                  Khói Lam
+              </Link>
           </div>
           
           <nav className="hidden lg:flex items-center gap-8">
