@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { google } from 'googleapis';
 import multer from 'multer';
 import stream from 'stream';
-import pool, { initDB } from './db.ts';
+import pool, { initDB } from './db.js';
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
