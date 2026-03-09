@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Menu, Search, User, LogOut, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import logo from '../assets/logo.png';
+import {logo} from '../assets/logo.png';
 
 export default function Header() {
   const { user, logout } = useAuth();
