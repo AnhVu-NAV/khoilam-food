@@ -61,14 +61,14 @@ export default function Admin() {
     fetchData();
   }, [user, navigate]);
 
-  const fetchData = async () => {
-    fetch('/api/products').then(res => res.json()).then(data => setProducts(Array.isArray(data) ? data : []));
-    fetch('/api/orders').then(res => res.json()).then(data => setOrders(Array.isArray(data) ? data : []));
-    fetch('/api/coupons').then(res => res.json()).then(data => setCoupons(Array.isArray(data) ? data : []));
-    fetch('/api/customers').then(res => res.json()).then(data => setCustomers(Array.isArray(data) ? data : []));
-    fetch('/api/batches').then(res => res.json()).then(data => setBatches(Array.isArray(data) ? data : []));
-    fetch('/api/analytics').then(res => res.json()).then(setAnalytics);
-  };
+    const fetchData = async () => {
+        fetch('/api/products').then(res => res.json()).then(data => setProducts(Array.isArray(data) ? data : []));
+        fetch('/api/orders').then(res => res.json()).then(data => setOrders(Array.isArray(data) ? data : []));
+        fetch('/api/coupons').then(res => res.json()).then(data => setCoupons(Array.isArray(data) ? data : []));
+        fetch('/api/orders?action=customers').then(res => res.json()).then(data => setCustomers(Array.isArray(data) ? data : []));
+        fetch('/api/batches').then(res => res.json()).then(data => setBatches(Array.isArray(data) ? data : []));
+        fetch('/api/orders?action=analytics').then(res => res.json()).then(setAnalytics);
+    };
 
   if (!user || !['admin', 'seller', 'factory_manager'].includes(user.role)) return null;
 
@@ -78,8 +78,8 @@ export default function Admin() {
       cancel_reason = prompt('Vui lòng nhập lý do hủy đơn hàng:');
       if (cancel_reason === null) return; // User cancelled the prompt
     }
-    
-    await fetch(`/api/orders/${id}/status`, {
+
+    await fetch(`/api/order-status?id=${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status, cancel_reason })
@@ -93,7 +93,7 @@ export default function Admin() {
       setOrderItems([]);
     } else {
       setExpandedOrder(orderId);
-      const res = await fetch(`/api/orders/${orderId}/items`);
+      const res = await fetch(`/api/order-items?id=${orderId}`);
       const data = await res.json();
       setOrderItems(data);
     }
@@ -129,7 +129,9 @@ export default function Admin() {
     };
     
     const method = editingProduct ? 'PUT' : 'POST';
-    const url = editingProduct ? `/api/products/${encodeURIComponent(productForm.id)}` : '/api/products';
+    const url = editingProduct
+          ? `/api/product?id=${encodeURIComponent(productForm.id)}`
+          : '/api/products';
     
     const res = await fetch(url, {
       method,
@@ -148,7 +150,7 @@ export default function Admin() {
   const handleDeleteProduct = async (id: string) => {
     if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
       try {
-        const res = await fetch(`/api/products/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        const res = await fetch(`/api/product?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
         if (!res.ok) {
           throw new Error('Network response was not ok');
         }
@@ -222,7 +224,7 @@ export default function Admin() {
   };
 
   const toggleCouponStatus = async (code: string, currentStatus: number) => {
-    await fetch(`/api/coupons/${code}/status`, {
+    await fetch(`/api/coupon-status?code=${encodeURIComponent(code)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ is_active: currentStatus === 1 ? 0 : 1 })
@@ -237,7 +239,7 @@ export default function Admin() {
       setCustomerOrders([]);
     } else {
       setExpandedCustomer(customerId);
-      const res = await fetch(`/api/customers/${customerId}/orders`);
+      const res = await fetch(`/api/orders?action=customer-orders&id=${customerId}`);
       const data = await res.json();
       setCustomerOrders(data);
     }
@@ -287,7 +289,9 @@ export default function Admin() {
     };
 
     const method = editingBatch ? 'PUT' : 'POST';
-    const url = editingBatch ? `/api/batches/${encodeURIComponent(batchForm.id)}` : '/api/batches';
+    const url = editingBatch
+          ? `/api/batch?id=${encodeURIComponent(batchForm.id)}`
+          : '/api/batches';
 
     const res = await fetch(url, {
       method,
@@ -308,7 +312,7 @@ export default function Admin() {
   const handleDeleteBatch = async (id: string) => {
     if (confirm('Bạn có chắc chắn muốn xóa lô sản xuất này?')) {
       try {
-        const res = await fetch(`/api/batches/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        const res = await fetch(`/api/batch?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
         if (!res.ok) {
           throw new Error('Network response was not ok');
         }

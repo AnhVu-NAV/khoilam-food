@@ -1,4 +1,4 @@
-import pool, { initDB } from '../../../server/db.js';
+import pool, { initDB } from '../server/db.js';
 
 export default async function handler(req: any, res: any) {
     if (req.method !== 'PUT') {
@@ -7,8 +7,8 @@ export default async function handler(req: any, res: any) {
 
     try {
         await initDB();
-        const { is_active } = req.body;
-        const { code } = req.query;
+        const code = req.query?.code;
+        const { is_active } = req.body || {};
 
         if (!code || Array.isArray(code)) {
             return res.status(400).json({ success: false, message: 'Mã không hợp lệ' });
@@ -20,8 +20,8 @@ export default async function handler(req: any, res: any) {
         ]);
 
         return res.json({ success: true });
-    } catch (error) {
-        console.error('Update coupon status error:', error);
-        return res.status(500).json({ success: false, message: 'Lỗi server' });
+    } catch (error: any) {
+        console.error('Coupon status error:', error);
+        return res.status(500).json({ success: false, message: error?.message || 'Lỗi server' });
     }
 }

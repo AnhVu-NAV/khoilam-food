@@ -15,11 +15,14 @@ export default function Cart() {
   const handleApplyCoupon = async () => {
     setCouponError('');
     try {
-      const res = await fetch('/api/coupons/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: couponCode }),
-      });
+        const res = await fetch('/api/coupons', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'validate',
+                code: couponCode
+            }),
+        });
       const data = await res.json();
       if (data.success) {
         setDiscount(data.discount_percent);

@@ -38,32 +38,41 @@ export default function Account() {
       setOrderItems([]);
     } else {
       setExpandedOrder(orderId);
-      const res = await fetch(`/api/orders/${orderId}/items`);
+      const res = await fetch(`/api/order-items?id=${orderId}`)
       const data = await res.json();
       setOrderItems(data);
     }
   };
 
-  const cancelOrder = async (orderId: number) => {
-    const confirmCancel = window.confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?');
-    if (!confirmCancel) return;
+    const cancelOrder = async (orderId: number) => {
+        const confirmCancel = window.confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?');
+        if (!confirmCancel) return;
 
-    try {
-      const res = await fetch(`/api/orders/${orderId}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'cancelled', cancel_reason: 'Khách hàng tự hủy' })
-      });
-      const data = await res.json();
-      if (data.success) {
-        setOrders(orders.map((o: any) => o.id === orderId ? { ...o, status: 'cancelled', cancel_reason: 'Khách hàng tự hủy' } : o));
-      } else {
-        alert('Có lỗi xảy ra khi hủy đơn hàng.');
-      }
-    } catch (error) {
-      alert('Lỗi kết nối.');
-    }
-  };
+        try {
+            const res = await fetch(`/api/order-status?id=${orderId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    status: 'cancelled',
+                    cancel_reason: 'Khách hàng tự hủy',
+                }),
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                setOrders(orders.map((o: any) =>
+                    o.id === orderId
+                        ? { ...o, status: 'cancelled', cancel_reason: 'Khách hàng tự hủy' }
+                        : o
+                ));
+            } else {
+                alert('Có lỗi xảy ra khi hủy đơn hàng.');
+            }
+        } catch (error) {
+            alert('Lỗi kết nối.');
+        }
+    };
 
   if (!user) return null;
 

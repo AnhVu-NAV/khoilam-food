@@ -1,9 +1,9 @@
-import pool, { initDB } from '../../server/db.js';
+import pool, { initDB } from '../server/db.js';
 
 export default async function handler(req: any, res: any) {
     try {
         await initDB();
-        const { id } = req.query;
+        const id = req.query?.id;
 
         if (!id || Array.isArray(id)) {
             return res.status(400).json({ success: false, message: 'ID không hợp lệ' });
@@ -11,17 +11,14 @@ export default async function handler(req: any, res: any) {
 
         if (req.method === 'GET') {
             const batchRes = await pool.query(
-                `
-        SELECT b.*, p.name AS product_name
-        FROM batches b
-        LEFT JOIN products p ON b.product_id = p.id
-        WHERE b.id = $1
-        `,
+                `SELECT b.*, p.name AS product_name
+         FROM batches b
+         LEFT JOIN products p ON b.product_id = p.id
+         WHERE b.id = $1`,
                 [id]
             );
 
             const batch = batchRes.rows[0];
-
             if (!batch) {
                 return res.status(404).json({ success: false, message: 'Không tìm thấy lô' });
             }
@@ -33,24 +30,13 @@ export default async function handler(req: any, res: any) {
         }
 
         if (req.method === 'PUT') {
-            const {
-                product_id,
-                production_date,
-                temperature_log,
-                certificate_url,
-                production_log,
-            } = req.body;
+            const { product_id, production_date, temperature_log, certificate_url, production_log } =
+            req.body || {};
 
             await pool.query(
-                `
-        UPDATE batches
-        SET product_id = $1,
-            production_date = $2,
-            temperature_log = $3,
-            certificate_url = $4,
-            production_log = $5
-        WHERE id = $6
-        `,
+                `UPDATE batches
+         SET product_id = $1, production_date = $2, temperature_log = $3, certificate_url = $4, production_log = $5
+         WHERE id = $6`,
                 [
                     product_id,
                     production_date,
@@ -70,8 +56,8 @@ export default async function handler(req: any, res: any) {
         }
 
         return res.status(405).json({ success: false, message: 'Method not allowed' });
-    } catch (error) {
-        console.error('Batch detail API error:', error);
+    } catch (error: any) {
+        console.error('Batch error:', error);
         return res.status(400).json({ success: false, message: 'Lỗi xử lý lô' });
     }
 }
