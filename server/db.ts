@@ -5,34 +5,22 @@ import { products } from '../src/data/products.js';
 type QueryResultRow = Record<string, unknown>;
 
 declare global {
-  // eslint-disable-next-line no-var
-  var __khoiLamPool: Pool | undefined;
-  // eslint-disable-next-line no-var
-  var __khoiLamInitPromise: Promise<void> | undefined;
+    var __khoiLamPool: Pool | undefined;
+    var __khoiLamInitPromise: Promise<void> | undefined;
 }
 
 const connectionString = process.env.DATABASE_URL;
-
-if (!connectionString) {
-    console.error('Thiếu DATABASE_URL hoặc POSTGRES_URL. Hãy kết nối Neon/Postgres vào project Vercel.')
-  throw new Error(
-    'Thiếu DATABASE_URL hoặc POSTGRES_URL. Hãy kết nối Neon/Postgres vào project Vercel.'
-  );
-}
+if (!connectionString) throw new Error('Thiếu DATABASE_URL');
 
 const pool =
-  globalThis.__khoiLamPool ||
-  new Pool({
-    connectionString,
-    ssl:
-      process.env.VERCEL || process.env.NODE_ENV === 'production'
-        ? { rejectUnauthorized: false }
-        : false,
-    max: 5,
-  });
+    globalThis.__khoiLamPool ||
+    new Pool({
+        connectionString,
+        max: 5,
+    });
 
 if (!globalThis.__khoiLamPool) {
-  globalThis.__khoiLamPool = pool;
+    globalThis.__khoiLamPool = pool;
 }
 
 const ensureUserColumns = async () => {
