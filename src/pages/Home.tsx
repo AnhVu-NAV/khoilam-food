@@ -1,12 +1,50 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, QrCode, Sparkles, Flame } from 'lucide-react';
-import { products } from '../data/products';
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+
+type Product = {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    category: string;
+    image: string;
+    weights: string[];
+    stock: number;
+};
 
 export default function Home() {
-  const featuredProducts = products.slice(0, 4);
+    const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+    const [loadingProducts, setLoadingProducts] = useState(true);
 
-  return (
+    useEffect(() => {
+        const loadProducts = async () => {
+            try {
+                const res = await fetch('/api/products', {
+                    headers: { Accept: 'application/json' },
+                });
+
+                const data = await res.json();
+                console.log('HOME /api/products =>', data);
+
+                if (Array.isArray(data)) {
+                    setFeaturedProducts(data.slice(0, 4));
+                } else {
+                    setFeaturedProducts([]);
+                }
+            } catch (error) {
+                console.error('Home load products error:', error);
+                setFeaturedProducts([]);
+            } finally {
+                setLoadingProducts(false);
+            }
+        };
+
+        loadProducts();
+    }, []);
+
+    return (
     <div className="w-full">
       {/* Hero Section */}
       <section className="relative h-[85vh] flex items-center justify-center overflow-hidden bg-khoi-lam">
@@ -97,71 +135,88 @@ export default function Home() {
       </section>
 
       {/* Featured Products */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-end mb-16">
-            <div>
-              <span className="text-xanh-rung uppercase tracking-widest text-sm font-semibold mb-2 block">Tinh hoa núi rừng</span>
-              <h2 className="font-serif text-4xl md:text-5xl font-bold text-khoi-lam">Sản phẩm nổi bật</h2>
-            </div>
-            <Link to="/san-pham" className="hidden md:inline-flex items-center gap-2 text-khoi-lam hover:text-xanh-rung font-medium transition-colors border-b border-transparent hover:border-xanh-rung pb-1">
-              Xem tất cả <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
+        <section className="py-24 bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex justify-between items-end mb-16">
+                    <div>
+              <span className="text-xanh-rung uppercase tracking-widest text-sm font-semibold mb-2 block">
+                Tinh hoa núi rừng
+              </span>
+                        <h2 className="font-serif text-4xl md:text-5xl font-bold text-khoi-lam">
+                            Sản phẩm nổi bật
+                        </h2>
+                    </div>
+                    <Link
+                        to="/san-pham"
+                        className="hidden md:inline-flex items-center gap-2 text-khoi-lam hover:text-xanh-rung font-medium transition-colors border-b border-transparent hover:border-xanh-rung pb-1"
+                    >
+                        Xem tất cả <ArrowRight className="w-4 h-4" />
+                    </Link>
+                </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {featuredProducts.map((product) => (
-              <Link to={`/san-pham/${product.id}`} key={product.id} className="group flex flex-col bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-khoi-lam/5 h-full">
-                <div className="aspect-[4/5] overflow-hidden bg-kem relative">
-                  <img 
-                    src={product.image} 
-                    alt={product.name} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-khoi-lam shadow-sm">
-                    {product.category}
-                  </div>
-                  {product.stock <= 0 && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">
-                      <span className="bg-white text-do-gach px-4 py-2 rounded-full font-bold text-sm shadow-lg">Hết hàng</span>
+                {loadingProducts ? (
+                    <div className="flex justify-center items-center py-16">
+                        <div className="w-10 h-10 border-4 border-khoi-lam/20 border-t-khoi-lam rounded-full animate-spin"></div>
                     </div>
-                  )}
-                </div>
-                
-                <div className="p-6 flex flex-col flex-grow">
-                  <h3 className="font-serif text-xl font-semibold text-khoi-lam mb-2 group-hover:text-xanh-rung transition-colors">
-                    {product.name}
-                  </h3>
-                  <p className="text-khoi-lam/60 text-sm line-clamp-2 mb-6 flex-grow">
-                    {product.description}
-                  </p>
-                  
-                  <div className="flex justify-between items-center pt-4 border-t border-khoi-lam/10 mt-auto">
-                    <div className="flex flex-col">
-                      <span className="text-xs text-khoi-lam/50 block mb-0.5">Giá từ</span>
-                      <span className="font-semibold text-lg text-khoi-lam">
-                        {product.price.toLocaleString('vi-VN')}đ
-                      </span>
+                ) : featuredProducts.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                        {featuredProducts.map((product) => (
+                            <Link
+                                to={`/san-pham/${product.id}`}
+                                key={product.id}
+                                className="group flex flex-col bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-khoi-lam/5 h-full"
+                            >
+                                <div className="aspect-[4/5] overflow-hidden bg-kem relative">
+                                    <img
+                                        src={product.image}
+                                        alt={product.name}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                                        referrerPolicy="no-referrer"
+                                    />
+                                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-khoi-lam shadow-sm">
+                                        {product.category}
+                                    </div>
+                                    {product.stock <= 0 && (
+                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">
+                        <span className="bg-white text-do-gach px-4 py-2 rounded-full font-bold text-sm shadow-lg">
+                          Hết hàng
+                        </span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="p-6 flex flex-col flex-grow">
+                                    <h3 className="font-serif text-xl font-semibold text-khoi-lam mb-2 group-hover:text-xanh-rung transition-colors">
+                                        {product.name}
+                                    </h3>
+                                    <p className="text-khoi-lam/60 text-sm line-clamp-2 mb-6 flex-grow">
+                                        {product.description}
+                                    </p>
+
+                                    <div className="flex justify-between items-center pt-4 border-t border-khoi-lam/10 mt-auto">
+                                        <div className="flex flex-col">
+                                            <span className="text-xs text-khoi-lam/50 block mb-0.5">Giá từ</span>
+                                            <span className="font-semibold text-lg text-khoi-lam">
+                          {Number(product.price).toLocaleString('vi-VN')}đ
+                        </span>
+                                        </div>
+                                        {Array.isArray(product.weights) && product.weights.length > 0 && (
+                                            <div className="bg-khoi-lam/5 text-khoi-lam px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide">
+                                                {product.weights[0].trim()}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
                     </div>
-                    {Array.isArray(product.weights) && product.weights.length > 0 && (
-                      <div className="bg-khoi-lam/5 text-khoi-lam px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide">
-                        {product.weights[0].trim()}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-          
-          <div className="mt-12 text-center md:hidden">
-            <Link to="/san-pham" className="inline-flex items-center gap-2 text-khoi-lam hover:text-xanh-rung font-medium transition-colors border-b border-khoi-lam pb-1">
-              Xem tất cả sản phẩm <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
+                ) : (
+                    <div className="text-center py-16 text-khoi-lam/60">
+                        Chưa có sản phẩm.
+                    </div>
+                )}
+            </div>
+        </section>
 
       {/* Traceability Demo Section */}
       <section className="py-24 bg-khoi-lam text-kem overflow-hidden relative">

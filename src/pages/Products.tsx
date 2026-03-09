@@ -17,23 +17,38 @@ export default function Products() {
   const categories = ['Tất cả', 'Thịt gác bếp', 'Lạp xưởng', 'Cá gác bếp', 'Gia vị'];
   const weights = ['250g', '500g', '1kg'];
 
-  useEffect(() => {
-    fetch('/api/products')
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setProducts(data);
-        } else {
-          console.error('Expected array of products, got:', data);
-          setProducts([]);
-        }
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error fetching products:', err);
-        setLoading(false);
-      });
-  }, []);
+    useEffect(() => {
+        const loadProducts = async () => {
+            try {
+                setLoading(true);
+
+                const res = await fetch('/api/products', {
+                    headers: { Accept: 'application/json' },
+                });
+
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
+
+                const data = await res.json();
+                console.log('PRODUCTS /api/products =>', data);
+
+                if (Array.isArray(data)) {
+                    setProducts(data);
+                } else {
+                    console.error('Expected array of products, got:', data);
+                    setProducts([]);
+                }
+            } catch (err) {
+                console.error('Error fetching products:', err);
+                setProducts([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadProducts();
+    }, []);
 
   // Reset page when filters change
   useEffect(() => {
