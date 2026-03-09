@@ -150,6 +150,14 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
   }
 });
 
+app.all('/api/auth/login', async (req, res, next) => {
+    console.log('LOGIN HIT:', req.method, req.originalUrl);
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    return next();
+});
+
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
 
