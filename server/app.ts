@@ -52,17 +52,19 @@ const toInt = (value: unknown, fallback = 0) => {
 app.get('/api/health', async (_req, res) => {
     try {
         const dbRes = await pool.query(`SELECT current_database() AS db`);
-        const tablesRes = await pool.query(`
-      SELECT table_name
-      FROM information_schema.tables
-      WHERE table_schema = 'public'
-      ORDER BY table_name
-    `);
+        const tableCounts = await pool.query(`
+            SELECT
+                    (SELECT COUNT(*)::int FROM products) AS products_count,
+                    (SELECT COUNT(*)::int FROM users) AS users_count,
+                    (SELECT COUNT(*)::int FROM coupons) AS coupons_count,
+                    (SELECT COUNT(*)::int FROM batches) AS batches_count,
+                    (SELECT COUNT(*)::int FROM orders) AS orders_count
+        `);
 
         return res.json({
             success: true,
             db: dbRes.rows[0]?.db,
-            tables: tablesRes.rows.map((r: any) => r.table_name),
+            ...tableCounts.rows[0],
         });
     } catch (error: any) {
         return res.status(500).json({
