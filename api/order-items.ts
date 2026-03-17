@@ -14,10 +14,16 @@ export default async function handler(req: any, res: any) {
         }
 
         const itemsRes = await pool.query(
-            `SELECT oi.*, p.name AS product_name, p.image AS product_image
-       FROM order_items oi
-       LEFT JOIN products p ON oi.product_id = p.id
-       WHERE oi.order_id = $1`,
+            `
+                SELECT
+                    oi.*,
+                    p.name AS product_name,
+                    p.image AS product_image
+                FROM order_items oi
+                         LEFT JOIN products p ON oi.product_id = p.id
+                WHERE oi.order_id = $1
+                ORDER BY oi.id ASC
+            `,
             [id]
         );
 
@@ -26,10 +32,14 @@ export default async function handler(req: any, res: any) {
                 ...item,
                 quantity: Number(item.quantity ?? 1),
                 price: Number(item.price ?? 0),
+                weight: item.weight ?? '',
             }))
         );
     } catch (error: any) {
         console.error('Order items error:', error);
-        return res.status(500).json({ success: false, message: error?.message || 'Lỗi server' });
+        return res.status(500).json({
+            success: false,
+            message: error?.message || 'Lỗi server',
+        });
     }
 }
