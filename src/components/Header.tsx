@@ -34,18 +34,18 @@ export default function Header() {
                   <img
                       src={logo}
                       alt="Khói Lam"
-                      className="h-12 w-auto"
+                      className="h-24 w-auto"
                   />
 
                   <div className="flex flex-col leading-tight">
-                    <span className="font-serif text-xl font-bold text-khoi-lam">
+                    <span className="text-xl font-bold text-khoi-lam">
                       KHÓI LAM
                     </span>
 
                   {/* Gạch ngang */}
-                  <div className="w-full h-[2px] bg-khoi-lam my-1"></div>
+                  <div className="w-full h-[2px] bg-khoi-lam"></div>
 
-                    <span className="text-sm text-khoi-lam/80">
+                    <span className="font-serif  text-sm text-khoi-lam/80">
                       Đặc Sản Tây Bắc
                     </span>
                   </div>
