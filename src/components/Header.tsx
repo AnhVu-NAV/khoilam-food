@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Menu, Search, User, LogOut, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import logo from '../assets/logo.png';
+import logo from '../assets/LOGOVANG.png';
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -29,14 +29,26 @@ export default function Header() {
             </button>
               <Link
                   to="/"
-                  className="font-serif text-2xl font-bold tracking-tight text-khoi-lam flex items-center gap-3"
+                  className="flex items-center gap-3"
               >
                   <img
                       src={logo}
                       alt="Khói Lam"
-                      className="h-10 w-auto"
+                      className="h-12 w-auto"
                   />
-                  Khói Lam
+
+                  <div className="flex flex-col leading-tight">
+                    <span className="font-serif text-xl font-bold text-khoi-lam">
+                      KHÓI LAM
+                    </span>
+
+                  {/* Gạch ngang */}
+                  <div className="w-full h-[2px] bg-khoi-lam my-1"></div>
+
+                    <span className="text-sm text-khoi-lam/80">
+                      Đặc Sản Tây Bắc
+                    </span>
+                  </div>
               </Link>
           </div>
           
