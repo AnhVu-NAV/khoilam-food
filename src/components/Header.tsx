@@ -14,11 +14,19 @@ export default function Header() {
     const [isProductMenuOpen, setIsProductMenuOpen] = useState(false);
     const [isMobileProductMenuOpen, setIsMobileProductMenuOpen] = useState(false);
 
-    const productCategories = [
-        'Thịt gác bếp',
-        'Lạp xưởng',
-        'Cá gác bếp',
-        'Gia vị',
+    const productMenu = [
+        {
+            name: 'Thực phẩm & Gia vị',
+            link: '/san-pham',
+        },
+        {
+            name: 'Family Combo',
+            link: '/combo',
+        },
+        {
+            name: 'Quà tặng biếu',
+            link: '/qua-tang',
+        },
     ];
 
     const handleLogout = () => {
@@ -93,25 +101,16 @@ export default function Header() {
 
                             {isProductMenuOpen && (
                                 <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 z-50">
-                                    <div className="w-72 rounded-2xl border border-khoi-lam/10 bg-kem shadow-xl p-3">
-                                        <div className="grid gap-1">
+                                    <div className="w-64 rounded-2xl border border-khoi-lam/10 bg-kem shadow-xl p-3">
+                                        {productMenu.map((item) => (
                                             <Link
-                                                to="/san-pham"
-                                                className="px-4 py-3 rounded-xl text-sm font-semibold text-khoi-lam hover:bg-khoi-lam/5 transition-colors"
+                                                key={item.name}
+                                                to={item.link}
+                                                className="block px-4 py-3 rounded-xl text-sm font-medium text-khoi-lam hover:bg-khoi-lam/5 hover:text-xanh-rung transition-colors"
                                             >
-                                                Tất cả sản phẩm
+                                                {item.name}
                                             </Link>
-
-                                            {productCategories.map((category) => (
-                                                <Link
-                                                    key={category}
-                                                    to={`/san-pham?category=${encodeURIComponent(category)}`}
-                                                    className="px-4 py-3 rounded-xl text-sm text-khoi-lam hover:bg-khoi-lam/5 hover:text-xanh-rung transition-colors"
-                                                >
-                                                    {category}
-                                                </Link>
-                                            ))}
-                                        </div>
+                                        ))}
                                     </div>
                                 </div>
                             )}
@@ -214,28 +213,17 @@ export default function Header() {
 
                             {isMobileProductMenuOpen && (
                                 <div className="mt-1 ml-3 flex flex-col gap-1">
-                                    <Link
-                                        to="/san-pham"
-                                        onClick={() => {
-                                            setIsMobileMenuOpen(false);
-                                            setIsMobileProductMenuOpen(false);
-                                        }}
-                                        className="py-2 px-4 text-sm hover:bg-khoi-lam/5 rounded-xl transition-colors"
-                                    >
-                                        Tất cả sản phẩm
-                                    </Link>
-
-                                    {productCategories.map((category) => (
+                                    {productMenu.map((item) => (
                                         <Link
-                                            key={category}
-                                            to={`/san-pham?category=${encodeURIComponent(category)}`}
+                                            key={item.name}
+                                            to={item.link}
                                             onClick={() => {
                                                 setIsMobileMenuOpen(false);
                                                 setIsMobileProductMenuOpen(false);
                                             }}
                                             className="py-2 px-4 text-sm hover:bg-khoi-lam/5 rounded-xl transition-colors"
                                         >
-                                            {category}
+                                            {item.name}
                                         </Link>
                                     ))}
                                 </div>

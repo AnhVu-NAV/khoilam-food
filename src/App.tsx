@@ -12,34 +12,39 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Account from './pages/Account';
 import Admin from './pages/Admin';
+import Combo from './pages/Combo';
+import Gift from './pages/Gift';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 
 export default function App() {
-  return (
-    <AuthProvider>
-      <CartProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Home />} />
-              <Route path="san-pham" element={<Products />} />
-              <Route path="san-pham/:id" element={<ProductDetail />} />
-              <Route path="truy-xuat" element={<Traceability />} />
-              <Route path="cau-chuyen" element={<Story />} />
-              <Route path="gioi-thieu" element={<About />} />
-              <Route path="dang-nhap" element={<Login />} />
-              <Route path="dang-ky" element={<Register />} />
-              <Route path="gio-hang" element={<Cart />} />
-              <Route path="thanh-toan" element={<Checkout />} />
-              <Route path="tai-khoan" element={<Account />} />
-              <Route path="admin" element={<Admin />} />
-              {/* Fallback for undefined routes */}
-              <Route path="*" element={<Home />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </CartProvider>
-    </AuthProvider>
-  );
+    return (
+        <AuthProvider>
+            <CartProvider>
+                <BrowserRouter>
+                    <Routes>
+                        <Route path="/" element={<Layout />}>
+                            <Route index element={<Home />} />
+                            <Route path="san-pham" element={<Products />} />
+                            <Route path="san-pham/:id" element={<ProductDetail />} />
+                            <Route path="truy-xuat" element={<Traceability />} />
+                            <Route path="cau-chuyen" element={<Story />} />
+                            <Route path="gioi-thieu" element={<About />} />
+                            <Route path="dang-nhap" element={<Login />} />
+                            <Route path="dang-ky" element={<Register />} />
+                            <Route path="gio-hang" element={<Cart />} />
+                            <Route path="thanh-toan" element={<Checkout />} />
+                            <Route path="tai-khoan" element={<Account />} />
+                            <Route path="admin" element={<Admin />} />
+                            <Route path="combo" element={<Combo />} />
+                            <Route path="qua-tang" element={<Gift />} />
+
+                            {/* Fallback for undefined routes */}
+                            <Route path="*" element={<Home />} />
+                        </Route>
+                    </Routes>
+                </BrowserRouter>
+            </CartProvider>
+        </AuthProvider>
+    );
 }
