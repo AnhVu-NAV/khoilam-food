@@ -3,48 +3,45 @@ import { Gift, ShieldCheck, Sparkles } from 'lucide-react';
 
 const giftSets = [
     {
-        id: 'gift-1',
-        name: 'Hộp Quà Tây Bắc Tinh Chọn',
+        id: 'gift-box-1',
+        name: 'Set quà tặng hộp cứng 01',
         description:
-            'Set quà trang nhã, phù hợp biếu người thân, đối tác hoặc khách quý trong dịp lễ tết.',
+            'Set quà tặng chỉn chu, phù hợp biếu người thân, đối tác hoặc khách quý.',
         items: [
-            'Thịt Trâu Gác Bếp 500g',
-            'Lạp Xưởng Hun Mía 500g',
-            'Gia Vị Chẩm Chéo 50g',
-        ],
-        price: 799000,
-        note: 'Đóng gói chỉn chu',
-    },
-    {
-        id: 'gift-2',
-        name: 'Hộp Quà Khói Lam Premium',
-        description:
-            'Phiên bản quà tặng cao cấp với cách phối sản phẩm hài hoà và đậm chất bản địa.',
-        items: [
-            'Thịt Lợn Bản Gác Bếp 500g',
-            'Cá Trắm Đen Gác Bếp 500g',
-            'Tương Ớt Mường Khương 250ml',
-            'Gia Vị Chẩm Chéo 50g',
+            '500gr thịt trâu gác bếp',
+            '500gr heo bản gác bếp',
+            'Combo 3 hũ chấm',
         ],
         price: 899000,
-        note: 'Phù hợp biếu tặng',
+        note: 'Hộp cứng sang trọng',
     },
     {
-        id: 'gift-3',
-        name: 'Set Quà Biếu Đậm Vị Núi Rừng',
+        id: 'gift-box-2',
+        name: 'Set quà tặng hộp cứng 02',
         description:
-            'Một lựa chọn tinh tế cho những ai yêu hương vị đặc sản truyền thống và sự khác biệt.',
+            'Set thiên về thịt trâu gác bếp, phù hợp với người thích hương vị đậm đà đặc trưng.',
         items: [
-            'Thịt Trâu Gác Bếp 250g',
-            'Lạp Xưởng Gác Bếp 500g',
-            'Tương Ớt Mường Khương 250ml',
+            '1000gr thịt trâu gác bếp',
+            'Combo 3 hũ chấm',
         ],
-        price: 729000,
-        note: 'Dễ tặng, dễ mang',
+        price: 1000000,
+        note: 'Đậm vị truyền thống',
+    },
+    {
+        id: 'gift-box-3',
+        name: 'Set quà tặng hộp cứng 03',
+        description:
+            'Lựa chọn hợp lý cho người yêu thích thịt heo bản gác bếp và các vị chấm ăn kèm.',
+        items: [
+            '1000gr heo bản gác bếp',
+            'Combo 3 hũ chấm',
+        ],
+        price: 759000,
+        note: 'Dễ biếu tặng',
     },
 ];
 
-export default function GiftPage() {
+export default function Gift() {
     return (
         <div className="bg-kem min-h-screen py-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -56,8 +53,8 @@ export default function GiftPage() {
                         Hộp quà đậm vị Tây Bắc
                     </h1>
                     <p className="text-khoi-lam/70 max-w-2xl mx-auto text-lg leading-relaxed">
-                        Những set quà mang tinh thần mộc mạc, chỉn chu và giàu bản sắc để bạn gửi
-                        gắm sự trân trọng đến người nhận.
+                        Những set quà được phối sẵn để bạn dễ dàng chọn một món quà mang bản sắc,
+                        chỉn chu và đậm chất núi rừng.
                     </p>
                 </div>
 
@@ -68,7 +65,7 @@ export default function GiftPage() {
                             className="bg-white rounded-3xl border border-khoi-lam/5 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
                         >
                             <div className="p-8 border-b border-khoi-lam/5">
-                                <div className="flex items-center justify-between gap-3 mb-4">
+                                <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
                   <span className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-vang-logo/15 text-khoi-lam">
                     <Gift className="w-4 h-4" />
                       {giftSet.note}
@@ -90,7 +87,7 @@ export default function GiftPage() {
                             </div>
 
                             <div className="p-8 flex-grow">
-                                <h3 className="font-semibold text-khoi-lam mb-4">Thành phần hộp quà:</h3>
+                                <h3 className="font-semibold text-khoi-lam mb-4">Bao gồm:</h3>
                                 <ul className="space-y-3">
                                     {giftSet.items.map((item) => (
                                         <li
@@ -106,15 +103,15 @@ export default function GiftPage() {
 
                             <div className="p-8 pt-0">
                                 <div className="border-t border-khoi-lam/10 pt-6">
-                                    <div className="flex items-center justify-between gap-4 mb-6">
+                                    <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
                                         <div>
-                                            <p className="text-sm text-khoi-lam/50 mb-1">Giá tham khảo</p>
+                                            <p className="text-sm text-khoi-lam/50 mb-1">Giá hộp quà</p>
                                             <span className="text-2xl font-bold text-do-gach">
                         {giftSet.price.toLocaleString('vi-VN')}đ
                       </span>
                                         </div>
 
-                                        <div className="hidden sm:flex items-center gap-2 text-khoi-lam/55 text-sm">
+                                        <div className="inline-flex items-center gap-2 text-khoi-lam/55 text-sm">
                                             <ShieldCheck className="w-4 h-4" />
                                             Đóng gói cẩn thận
                                         </div>
@@ -142,11 +139,11 @@ export default function GiftPage() {
 
                 <div className="mt-16 bg-white rounded-3xl border border-khoi-lam/5 p-8 md:p-10 text-center">
                     <h3 className="font-serif text-3xl font-bold text-khoi-lam mb-4">
-                        Cần set quà theo ngân sách riêng?
+                        Muốn tự chọn quà theo ngân sách?
                     </h3>
                     <p className="text-khoi-lam/65 max-w-2xl mx-auto leading-relaxed mb-6">
-                        Bạn có thể chọn các sản phẩm riêng lẻ để tạo hộp quà phù hợp với nhu cầu biếu
-                        tặng cá nhân, gia đình hoặc đối tác.
+                        Bạn có thể chọn từng sản phẩm riêng lẻ để tự phối một set quà tặng phù hợp
+                        với nhu cầu biếu tặng cá nhân, gia đình hoặc đối tác.
                     </p>
                     <Link
                         to="/san-pham"

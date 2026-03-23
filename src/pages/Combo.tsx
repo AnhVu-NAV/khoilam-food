@@ -3,47 +3,44 @@ import { ShoppingBag, Tag, Users } from 'lucide-react';
 
 const combos = [
     {
-        id: 'combo-gia-dinh-1',
-        name: 'Combo Gác Bếp Sum Vầy',
+        id: 'combo-met-nho-tien-loi',
+        name: 'Combo Mẹt nhỏ tiện lợi',
         description:
-            'Set phù hợp cho gia đình 3-5 người, kết hợp thịt gác bếp và gia vị chấm chuẩn vị Tây Bắc.',
+            'Set gọn nhẹ, tiện lợi để thưởng thức nhiều vị đặc sản trong một lần mua.',
         includes: [
-            'Thịt Trâu Gác Bếp 500g',
-            'Lạp Xưởng Gác Bếp 500g',
-            'Gia Vị Chẩm Chéo 50g',
+            'Thịt trâu gác bếp (Instant) - 250gr',
+            'Heo bản gác bếp (Instant) - 250gr',
+            'Lạp xưởng hun mía - 250gr',
+            'Tặng kèm 1 gói chẩm chéo ướt / 1 gói chẩm chéo khô',
         ],
-        originalPrice: 709000,
-        salePrice: 649000,
-        badge: 'Tiết kiệm 60.000đ',
+        price: 459000,
+        badge: 'Tiện lợi',
     },
     {
-        id: 'combo-gia-dinh-2',
-        name: 'Combo Bếp Lửa Tây Bắc',
+        id: 'combo-gac-bep-sieu-tiet-kiem',
+        name: 'Combo Gác Bếp Siêu Tiết Kiệm',
         description:
-            'Combo đậm vị bản dành cho bữa ăn gia đình ấm cúng hoặc tiếp khách cuối tuần.',
+            'Set dành cho khách thích vị gác bếp truyền thống với mức giá tiết kiệm hơn khi mua lẻ.',
         includes: [
-            'Thịt Lợn Bản Gác Bếp 500g',
-            'Cá Trắm Đen Gác Bếp 500g',
-            'Tương Ớt Mường Khương 250ml',
+            '500gr thịt trâu gác bếp',
+            '500gr heo bản gác bếp',
+            'Tặng kèm 1 gói chẩm chéo ướt / 1 gói chẩm chéo khô',
         ],
-        originalPrice: 594000,
-        salePrice: 549000,
-        badge: 'Ưa chuộng',
+        price: 699000,
+        badge: 'Tiết kiệm',
     },
     {
-        id: 'combo-gia-dinh-3',
-        name: 'Combo Thưởng Thức Trọn Vị',
+        id: 'combo-tam-lap-vi',
+        name: 'Combo Tam Lạp vị',
         description:
-            'Một set đầy đủ cho người thích trải nghiệm nhiều hương vị đặc sản Tây Bắc trong một lần mua.',
+            'Bộ sưu tập 3 loại lạp xưởng đặc trưng, phù hợp cho người thích khám phá nhiều hương vị.',
         includes: [
-            'Thịt Trâu Gác Bếp 250g',
-            'Lạp Xưởng Hun Mía 500g',
-            'Gia Vị Chẩm Chéo 50g',
-            'Tương Ớt Mường Khương 250ml',
+            'Lạp xưởng gác bếp - 500gr',
+            'Lạp xưởng hun mía - 500gr',
+            'Lạp xưởng trứng muối - 500gr',
         ],
-        originalPrice: 734000,
-        salePrice: 679000,
-        badge: 'Bán chạy',
+        price: 529000,
+        badge: 'Đậm vị',
     },
 ];
 
@@ -56,11 +53,11 @@ export default function Combo() {
             Family Combo
           </span>
                     <h1 className="font-serif text-5xl md:text-6xl font-bold text-khoi-lam mb-6">
-                        Combo cho gia đình
+                        Combo gia đình
                     </h1>
                     <p className="text-khoi-lam/70 max-w-2xl mx-auto text-lg leading-relaxed">
-                        Những set sản phẩm được phối sẵn để giúp bạn thưởng thức đặc sản Tây Bắc
-                        tiện hơn, tiết kiệm hơn và trọn vị hơn.
+                        Những set phối sẵn để bạn dễ chọn hơn, tiết kiệm hơn và thưởng thức trọn vị
+                        đặc sản Tây Bắc.
                     </p>
                 </div>
 
@@ -71,7 +68,7 @@ export default function Combo() {
                             className="bg-white rounded-3xl border border-khoi-lam/5 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
                         >
                             <div className="p-8 border-b border-khoi-lam/5">
-                                <div className="flex items-center justify-between gap-3 mb-4">
+                                <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
                   <span className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-vang-logo/15 text-khoi-lam">
                     <Tag className="w-4 h-4" />
                       {combo.badge}
@@ -109,18 +106,11 @@ export default function Combo() {
 
                             <div className="p-8 pt-0">
                                 <div className="border-t border-khoi-lam/10 pt-6">
-                                    <div className="flex items-end justify-between gap-4 mb-6">
-                                        <div>
-                                            <p className="text-sm text-khoi-lam/50 mb-1">Giá combo</p>
-                                            <div className="flex items-center gap-3 flex-wrap">
-                        <span className="text-2xl font-bold text-do-gach">
-                          {combo.salePrice.toLocaleString('vi-VN')}đ
-                        </span>
-                                                <span className="text-sm line-through text-khoi-lam/40">
-                          {combo.originalPrice.toLocaleString('vi-VN')}đ
-                        </span>
-                                            </div>
-                                        </div>
+                                    <div className="mb-6">
+                                        <p className="text-sm text-khoi-lam/50 mb-1">Giá combo</p>
+                                        <span className="text-2xl font-bold text-do-gach">
+                      {combo.price.toLocaleString('vi-VN')}đ
+                    </span>
                                     </div>
 
                                     <div className="flex gap-3">
@@ -146,17 +136,17 @@ export default function Combo() {
 
                 <div className="mt-16 bg-white rounded-3xl border border-khoi-lam/5 p-8 md:p-10 text-center">
                     <h3 className="font-serif text-3xl font-bold text-khoi-lam mb-4">
-                        Muốn tự phối combo riêng?
+                        Muốn tự chọn theo khẩu vị?
                     </h3>
                     <p className="text-khoi-lam/65 max-w-2xl mx-auto leading-relaxed mb-6">
-                        Bạn có thể chọn từng sản phẩm theo nhu cầu và tạo set thưởng thức phù hợp
-                        cho gia đình, biếu tặng hoặc mang đi xa.
+                        Bạn có thể vào danh mục sản phẩm để chọn riêng từng món theo nhu cầu của gia
+                        đình hoặc làm quà biếu.
                     </p>
                     <Link
                         to="/san-pham"
                         className="inline-flex items-center justify-center rounded-xl bg-khoi-lam text-white px-6 py-3 font-medium hover:bg-xanh-rung transition-colors"
                     >
-                        Tự chọn sản phẩm
+                        Xem toàn bộ sản phẩm
                     </Link>
                 </div>
             </div>
