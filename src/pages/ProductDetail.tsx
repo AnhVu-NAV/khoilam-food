@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ShoppingCart, ArrowLeft } from 'lucide-react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { ShoppingCart, ArrowLeft, Plus } from 'lucide-react';
 
 export default function ProductDetail() {
     const { id } = useParams<{ id: string }>();
@@ -9,6 +9,7 @@ export default function ProductDetail() {
     const { addToCart } = useCart();
 
     const [product, setProduct] = useState<any>(null);
+    const [allProducts, setAllProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedWeight, setSelectedWeight] = useState('');
     const [quantity, setQuantity] = useState(1);
@@ -18,6 +19,8 @@ export default function ProductDetail() {
             .then((res) => res.json())
             .then((data) => {
                 if (Array.isArray(data)) {
+                    setAllProducts(data);
+
                     const foundProduct = data.find((p: any) => p.id === id);
                     setProduct(foundProduct);
 
@@ -25,6 +28,7 @@ export default function ProductDetail() {
                         setSelectedWeight(foundProduct.weights[0]);
                     }
                 } else {
+                    setAllProducts([]);
                     setProduct(null);
                 }
 
@@ -62,6 +66,7 @@ export default function ProductDetail() {
 
     const selectedPrice =
         product?.weightPrices?.[selectedWeight] ??
+        product?.weight_prices?.[selectedWeight] ??
         product?.price ??
         0;
 
@@ -69,6 +74,18 @@ export default function ProductDetail() {
         addToCart(product, quantity, selectedWeight, selectedPrice);
         alert('Đã thêm vào giỏ hàng!');
     };
+
+    const suggestedProducts = allProducts
+        .filter((p) => {
+            if (p.id === product.id) return false;
+
+            if (product.category !== 'Gia vị' && p.category === 'Gia vị') return true;
+
+            if (product.category === 'Gia vị' && p.category === 'Thịt gác bếp') return true;
+
+            return false;
+        })
+        .slice(0, 3);
 
     return (
         <div className="bg-kem min-h-screen py-16">
@@ -101,7 +118,7 @@ export default function ProductDetail() {
                         </h1>
 
                         <p className="text-2xl font-bold text-do-gach mb-8">
-                            {selectedPrice.toLocaleString('vi-VN')}đ
+                            {Number(selectedPrice).toLocaleString('vi-VN')}đ
                         </p>
 
                         <p className="text-khoi-lam/80 text-lg leading-relaxed mb-8">
@@ -115,6 +132,7 @@ export default function ProductDetail() {
                                     product.weights.map((weight: string) => {
                                         const weightPrice =
                                             product?.weightPrices?.[weight] ??
+                                            product?.weight_prices?.[weight] ??
                                             product?.price ??
                                             0;
 
@@ -128,7 +146,7 @@ export default function ProductDetail() {
                                                         : 'border-khoi-lam/10 text-khoi-lam/60 hover:border-khoi-lam/30'
                                                 }`}
                                             >
-                                                {weight} - {weightPrice.toLocaleString('vi-VN')}đ
+                                                {weight} - {Number(weightPrice).toLocaleString('vi-VN')}đ
                                             </button>
                                         );
                                     })}
@@ -164,8 +182,116 @@ export default function ProductDetail() {
                                 Thêm vào giỏ
                             </button>
                         </div>
+
+                        <div className="space-y-6 border-t border-khoi-lam/10 pt-8">
+                            <div>
+                                <h4 className="font-semibold text-khoi-lam mb-2">Thành phần:</h4>
+                                <p className="text-khoi-lam/70 text-sm">{product.ingredients}</p>
+                            </div>
+                            <div>
+                                <h4 className="font-semibold text-khoi-lam mb-2">Bảo quản:</h4>
+                                <p className="text-khoi-lam/70 text-sm">{product.storage}</p>
+                            </div>
+                            <div>
+                                <h4 className="font-semibold text-khoi-lam mb-2">Hướng dẫn sử dụng:</h4>
+                                <p className="text-khoi-lam/70 text-sm">{product.usage}</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                {suggestedProducts.length > 0 && (
+                    <div className="mt-24">
+                        <div className="text-center mb-12">
+              <span className="text-vang-logo uppercase tracking-widest text-sm font-semibold mb-2 block">
+                Thưởng thức trọn vẹn
+              </span>
+                            <h2 className="font-serif text-3xl font-bold text-khoi-lam">
+                                Combo gợi ý
+                            </h2>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {suggestedProducts.map((suggested) => {
+                                const suggestedDefaultWeight =
+                                    Array.isArray(suggested.weights) && suggested.weights.length > 0
+                                        ? suggested.weights[0]
+                                        : '';
+
+                                const suggestedPrice =
+                                    suggested?.weightPrices?.[suggestedDefaultWeight] ??
+                                    suggested?.weight_prices?.[suggestedDefaultWeight] ??
+                                    suggested?.price ??
+                                    0;
+
+                                return (
+                                    <div
+                                        key={suggested.id}
+                                        className="group flex flex-col bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-khoi-lam/5 h-full"
+                                    >
+                                        <Link
+                                            to={`/san-pham/${suggested.id}`}
+                                            className="aspect-[4/5] overflow-hidden bg-kem relative block"
+                                        >
+                                            <img
+                                                src={suggested.image}
+                                                alt={suggested.name}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                                                referrerPolicy="no-referrer"
+                                            />
+                                            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-khoi-lam shadow-sm">
+                                                {suggested.category}
+                                            </div>
+                                        </Link>
+
+                                        <div className="p-6 flex flex-col flex-grow">
+                                            <Link to={`/san-pham/${suggested.id}`}>
+                                                <h3 className="font-serif text-xl font-semibold text-khoi-lam mb-2 group-hover:text-xanh-rung transition-colors">
+                                                    {suggested.name}
+                                                </h3>
+                                            </Link>
+
+                                            <p className="text-khoi-lam/60 text-sm line-clamp-2 mb-6 flex-grow">
+                                                {suggested.description}
+                                            </p>
+
+                                            <div className="flex justify-between items-center pt-4 border-t border-khoi-lam/10 mt-auto">
+                                                <div className="flex flex-col">
+                          <span className="text-xs text-khoi-lam/50 block mb-0.5">
+                            Giá từ
+                          </span>
+                                                    <span className="font-semibold text-lg text-khoi-lam">
+                            {Number(suggestedPrice).toLocaleString('vi-VN')}đ
+                          </span>
+                                                </div>
+
+                                                <div className="flex items-center gap-2">
+                                                    {suggestedDefaultWeight && (
+                                                        <div className="bg-khoi-lam/5 text-khoi-lam px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide">
+                                                            {suggestedDefaultWeight.trim()}
+                                                        </div>
+                                                    )}
+
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            addToCart(suggested, 1, suggestedDefaultWeight, suggestedPrice);
+                                                            alert(`Đã thêm ${suggested.name} vào giỏ hàng!`);
+                                                        }}
+                                                        className="bg-khoi-lam text-white p-2 rounded-lg hover:bg-xanh-rung transition-colors shadow-sm"
+                                                        title="Thêm vào giỏ"
+                                                    >
+                                                        <Plus className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
