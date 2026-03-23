@@ -28,12 +28,12 @@ export default function Header() {
 
     return (
         <header className="sticky top-0 z-50 w-full bg-kem/90 backdrop-blur-md border-b border-khoi-lam/10">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-20">
-                    <div className="flex items-center gap-6">
+            <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+                <div className="flex justify-between items-center h-16 sm:h-20">
+                    <div className="flex items-center gap-2 sm:gap-6 min-w-0">
                         <button
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                            className="p-2 -ml-2 text-khoi-lam hover:bg-khoi-lam/5 rounded-full lg:hidden"
+                            className="p-2 -ml-2 text-khoi-lam hover:bg-khoi-lam/5 rounded-full lg:hidden shrink-0"
                         >
                             {isMobileMenuOpen ? (
                                 <X className="w-6 h-6" />
@@ -42,23 +42,23 @@ export default function Header() {
                             )}
                         </button>
 
-                        <Link to="/" className="flex items-center gap-3">
+                        <Link to="/" className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
                             <img
                                 src={logo}
                                 alt="Khói Lam"
-                                className="h-24 w-auto object-contain translate-y-[1px]"
+                                className="h-10 sm:h-14 lg:h-20 w-auto object-contain translate-y-[1px] shrink-0"
                             />
 
-                            <div className="flex flex-col justify-center leading-none">
-                                <span className="text-[18px] sm:text-[20px] font-bold tracking-wide text-khoi-lam">
-                                  KHÓI LAM
-                                </span>
+                            <div className="flex flex-col justify-center leading-none min-w-0">
+                <span className="text-[14px] sm:text-[17px] lg:text-[20px] font-bold tracking-wide text-khoi-lam whitespace-nowrap">
+                  KHÓI LAM
+                </span>
 
-                                <div className="w-full h-[2px] bg-khoi-lam my-1"></div>
+                                <div className="w-14 sm:w-20 lg:w-full h-[2px] bg-khoi-lam my-1"></div>
 
-                                <span className="font-serif font-bold text-[15px] text-khoi-lam/80">
-                                  Đặc Sản Tây Bắc
-                                </span>
+                                <span className="hidden sm:block font-serif font-bold text-[11px] lg:text-[15px] text-khoi-lam/80 whitespace-nowrap">
+                  Đặc Sản Tây Bắc
+                </span>
                             </div>
                         </Link>
                     </div>
@@ -132,7 +132,7 @@ export default function Header() {
                         </Link>
                     </nav>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1 sm:gap-3 shrink-0">
                         <button className="p-2 text-khoi-lam hover:bg-khoi-lam/5 rounded-full">
                             <Search className="w-5 h-5" />
                         </button>
@@ -150,13 +150,13 @@ export default function Header() {
                         </Link>
 
                         {user ? (
-                            <div className="flex items-center gap-3 ml-2">
+                            <div className="flex items-center gap-1 sm:gap-3 ml-1 sm:ml-2">
                                 <Link
                                     to={['admin', 'seller', 'factory_manager'].includes(user.role) ? '/admin' : '/tai-khoan'}
                                     className="flex items-center gap-2 text-sm font-medium hover:text-xanh-rung transition-colors"
                                 >
                                     <User className="w-5 h-5" />
-                                    <span className="hidden sm:inline">{user.name}</span>
+                                    <span className="hidden md:inline">{user.name}</span>
                                 </Link>
 
                                 <button
@@ -170,10 +170,10 @@ export default function Header() {
                         ) : (
                             <Link
                                 to="/dang-nhap"
-                                className="ml-2 text-sm font-medium hover:text-xanh-rung transition-colors flex items-center gap-2"
+                                className="ml-1 sm:ml-2 text-sm font-medium hover:text-xanh-rung transition-colors flex items-center gap-2"
                             >
                                 <User className="w-5 h-5" />
-                                <span className="hidden sm:inline">Đăng nhập</span>
+                                <span className="hidden md:inline">Đăng nhập</span>
                             </Link>
                         )}
                     </div>
@@ -181,7 +181,7 @@ export default function Header() {
             </div>
 
             {isMobileMenuOpen && (
-                <div className="lg:hidden absolute top-20 left-0 w-full bg-kem border-b border-khoi-lam/10 shadow-lg">
+                <div className="lg:hidden absolute top-16 sm:top-20 left-0 w-full bg-kem border-b border-khoi-lam/10 shadow-lg">
                     <nav className="flex flex-col p-4">
                         <Link
                             to="/"
