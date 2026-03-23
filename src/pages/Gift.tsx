@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Gift, ShieldCheck, Sparkles } from 'lucide-react';
+import { Gift as GiftIcon, ShieldCheck, Sparkles } from 'lucide-react';
 
 const giftSets = [
     {
@@ -67,7 +67,7 @@ export default function Gift() {
                             <div className="p-8 border-b border-khoi-lam/5">
                                 <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
                   <span className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-vang-logo/15 text-khoi-lam">
-                    <Gift className="w-4 h-4" />
+                    <GiftIcon className="w-4 h-4" />
                       {giftSet.note}
                   </span>
 
