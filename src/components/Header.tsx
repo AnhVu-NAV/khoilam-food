@@ -42,21 +42,21 @@ export default function Header() {
                             )}
                         </button>
 
-                        <Link to="/" className="flex items-center gap-3">
+                        <Link to="/" className="flex items-center gap-2">
                             <img
                                 src={logo}
                                 alt="Khói Lam"
-                                className="h-24 w-auto"
+                                className="h-20 w-auto object-contain self-center translate-y-[2px]"
                             />
 
-                            <div className="flex flex-col leading-tight">
+                            <div className="flex flex-col justify-center leading-tight">
                                 <span className="text-xl font-bold text-khoi-lam">
                                   KHÓI LAM
                                 </span>
 
-                                <div className="w-full h-[2px] bg-khoi-lam"></div>
+                                <div className="w-16 h-[2px] bg-khoi-lam my-1"></div>
 
-                                <span className="font-serif font-bold text-sm text-khoi-lam/80 text-center">
+                                <span className="font-serif text-sm text-khoi-lam/80">
                                   Đặc Sản Tây Bắc
                                 </span>
                             </div>
