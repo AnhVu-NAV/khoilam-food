@@ -34,52 +34,77 @@ export default function About() {
         </div>
       </section>
 
-      {/* Mission & Values */}
-      <section className="bg-white py-24 border-y border-khoi-lam/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center mb-24">
-            <div>
-              <h2 className="font-serif text-4xl font-bold text-khoi-lam mb-6">Sứ mệnh của chúng tôi</h2>
-              <p className="text-khoi-lam/70 text-lg leading-relaxed mb-6">
-                Sinh ra từ tình yêu với vùng đất Tây Bắc, Khói Lam mang trong mình sứ mệnh bảo tồn và lan toả những giá trị ẩm thực truyền thống của đồng bào dân tộc. Chúng tôi tin rằng, mỗi món ăn không chỉ là thực phẩm, mà còn là câu chuyện về văn hoá, về con người và về sự giao hoà với thiên nhiên.
-              </p>
-              <p className="text-khoi-lam/70 text-lg leading-relaxed">
-                Đồng thời, chúng tôi cam kết mang đến sự minh bạch tuyệt đối thông qua công nghệ truy xuất nguồn gốc, giúp khách hàng hiện đại dễ dàng tiếp cận và an tâm tận hưởng những sản phẩm thủ công chất lượng cao.
-              </p>
+        {/* Mission & Values */}
+        <section className="bg-white py-24 border-y border-khoi-lam/5">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-20 items-center">
+                    <div className="max-w-2xl">
+        <span className="text-vang-logo uppercase tracking-widest text-sm font-semibold mb-4 block">
+          Giá trị cốt lõi
+        </span>
+
+                        <h2 className="font-serif text-4xl md:text-5xl font-bold text-khoi-lam mb-6 leading-tight">
+                            Sứ mệnh của chúng tôi
+                        </h2>
+
+                        <p className="text-khoi-lam/70 text-lg leading-relaxed mb-6">
+                            Sinh ra từ tình yêu với vùng đất Tây Bắc, Khói Lam mang trong mình sứ mệnh
+                            bảo tồn và lan toả những giá trị ẩm thực truyền thống của đồng bào dân tộc.
+                            Chúng tôi tin rằng, mỗi món ăn không chỉ là thực phẩm, mà còn là câu chuyện
+                            về văn hoá, về con người và về sự giao hoà với thiên nhiên.
+                        </p>
+
+                        <p className="text-khoi-lam/70 text-lg leading-relaxed">
+                            Đồng thời, chúng tôi cam kết mang đến sự minh bạch tuyệt đối thông qua công
+                            nghệ truy xuất nguồn gốc, giúp khách hàng hiện đại dễ dàng tiếp cận và an tâm
+                            tận hưởng những sản phẩm thủ công chất lượng cao.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="bg-kem/50 p-8 rounded-3xl border border-khoi-lam/5 text-center min-h-[220px] flex flex-col justify-center">
+                            <div className="w-14 h-14 bg-vang-logo/20 rounded-full flex items-center justify-center mx-auto mb-5 text-khoi-lam">
+                                <Heart className="w-7 h-7" />
+                            </div>
+                            <h3 className="font-bold text-khoi-lam text-lg mb-3">Tận tâm</h3>
+                            <p className="text-sm leading-relaxed text-khoi-lam/60">
+                                Chăm chút từng thớ thịt, từng hạt gia vị.
+                            </p>
+                        </div>
+
+                        <div className="bg-kem/50 p-8 rounded-3xl border border-khoi-lam/5 text-center min-h-[220px] flex flex-col justify-center">
+                            <div className="w-14 h-14 bg-xanh-rung/20 rounded-full flex items-center justify-center mx-auto mb-5 text-xanh-rung">
+                                <ShieldCheck className="w-7 h-7" />
+                            </div>
+                            <h3 className="font-bold text-khoi-lam text-lg mb-3">Minh bạch</h3>
+                            <p className="text-sm leading-relaxed text-khoi-lam/60">
+                                Rõ ràng nguồn gốc, an tâm chất lượng.
+                            </p>
+                        </div>
+
+                        <div className="bg-kem/50 p-8 rounded-3xl border border-khoi-lam/5 text-center min-h-[220px] flex flex-col justify-center">
+                            <div className="w-14 h-14 bg-do-gach/20 rounded-full flex items-center justify-center mx-auto mb-5 text-do-gach">
+                                <Flame className="w-7 h-7" />
+                            </div>
+                            <h3 className="font-bold text-khoi-lam text-lg mb-3">Truyền thống</h3>
+                            <p className="text-sm leading-relaxed text-khoi-lam/60">
+                                Giữ gìn công thức cổ truyền nguyên bản.
+                            </p>
+                        </div>
+
+                        <div className="bg-kem/50 p-8 rounded-3xl border border-khoi-lam/5 text-center min-h-[220px] flex flex-col justify-center">
+                            <div className="w-14 h-14 bg-khoi-lam/10 rounded-full flex items-center justify-center mx-auto mb-5 text-khoi-lam">
+                                <Leaf className="w-7 h-7" />
+                            </div>
+                            <h3 className="font-bold text-khoi-lam text-lg mb-3">Tự nhiên</h3>
+                            <p className="text-sm leading-relaxed text-khoi-lam/60">
+                                Nguyên liệu sạch từ núi rừng Tây Bắc.
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div className="grid grid-cols-2 gap-6">
-              <div className="bg-kem/50 p-8 rounded-3xl border border-khoi-lam/5 text-center">
-                <div className="w-12 h-12 bg-vang-logo/20 rounded-full flex items-center justify-center mx-auto mb-4 text-khoi-lam">
-                  <Heart className="w-6 h-6" />
-                </div>
-                <h3 className="font-bold text-khoi-lam mb-2">Tận tâm</h3>
-                <p className="text-sm text-khoi-lam/60">Chăm chút từng thớ thịt, từng hạt gia vị.</p>
-              </div>
-              <div className="bg-kem/50 p-8 rounded-3xl border border-khoi-lam/5 text-center mt-8">
-                <div className="w-12 h-12 bg-xanh-rung/20 rounded-full flex items-center justify-center mx-auto mb-4 text-xanh-rung">
-                  <ShieldCheck className="w-6 h-6" />
-                </div>
-                <h3 className="font-bold text-khoi-lam mb-2">Minh bạch</h3>
-                <p className="text-sm text-khoi-lam/60">Rõ ràng nguồn gốc, an tâm chất lượng.</p>
-              </div>
-              <div className="bg-kem/50 p-8 rounded-3xl border border-khoi-lam/5 text-center -mt-8">
-                <div className="w-12 h-12 bg-do-gach/20 rounded-full flex items-center justify-center mx-auto mb-4 text-do-gach">
-                  <Flame className="w-6 h-6" />
-                </div>
-                <h3 className="font-bold text-khoi-lam mb-2">Truyền thống</h3>
-                <p className="text-sm text-khoi-lam/60">Giữ gìn công thức cổ truyền nguyên bản.</p>
-              </div>
-              <div className="bg-kem/50 p-8 rounded-3xl border border-khoi-lam/5 text-center">
-                <div className="w-12 h-12 bg-khoi-lam/10 rounded-full flex items-center justify-center mx-auto mb-4 text-khoi-lam">
-                  <Leaf className="w-6 h-6" />
-                </div>
-                <h3 className="font-bold text-khoi-lam mb-2">Tự nhiên</h3>
-                <p className="text-sm text-khoi-lam/60">Nguyên liệu sạch từ núi rừng Tây Bắc.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
 
       {/* The Smoking Process */}
       <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
