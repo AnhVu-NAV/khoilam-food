@@ -56,7 +56,7 @@ export default function Header() {
 
                                 <div className="w-full h-[2px] bg-khoi-lam my-1"></div>
 
-                                <span className="font-serif text-[15px] text-khoi-lam/80">
+                                <span className="font-serif font-bold text-[15px] text-khoi-lam/80">
                                   Đặc Sản Tây Bắc
                                 </span>
                             </div>
