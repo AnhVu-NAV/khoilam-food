@@ -54,7 +54,7 @@ export default function Header() {
                                   KHÓI LAM
                                 </span>
 
-                                <div className="w-full h-[2px] bg-khoi-lam my-2"></div>
+                                <div className="w-full h-[2px] bg-khoi-lam my-1"></div>
 
                                 <span className="font-serif text-[15px] text-khoi-lam/80">
                                   Đặc Sản Tây Bắc
