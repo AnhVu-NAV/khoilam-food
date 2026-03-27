@@ -129,14 +129,14 @@ export default function About() {
               </p>
             </div>
             <div className="w-full md:w-1/2 order-1 md:order-2">
-              <img src="https://lh3.googleusercontent.com/d/1JwIIYBADmKvU11P_yFDlAAEmrtdy8jrt" alt="Nguyên liệu tươi ngon" className="rounded-3xl shadow-lg w-full object-cover aspect-[4/3]" referrerPolicy="no-referrer" />
+              <img src="https://lh3.googleusercontent.com/d/1DqazOLUbrDqDRUaBA1V6E1gCDLb4T3fM" alt="Nguyên liệu tươi ngon" className="rounded-3xl shadow-lg w-full object-cover aspect-[4/3]" referrerPolicy="no-referrer" />
             </div>
           </div>
 
           {/* Step 2 */}
           <div className="flex flex-col md:flex-row gap-12 items-center">
             <div className="w-full md:w-1/2">
-              <img src="https://picsum.photos/seed/tamuop/800/600" alt="Tẩm ướp gia vị" className="rounded-3xl shadow-lg w-full object-cover aspect-[4/3]" referrerPolicy="no-referrer" />
+              <img src="https://lh3.googleusercontent.com/d/1lF-BKnqH-exfVdB1AQk2yTbwDQ-HQsFW" alt="Tẩm ướp gia vị" className="rounded-3xl shadow-lg w-full object-cover aspect-[4/3]" referrerPolicy="no-referrer" />
             </div>
             <div className="w-full md:w-1/2">
               <div className="flex items-center gap-4 mb-6">
@@ -167,7 +167,7 @@ export default function About() {
               </p>
             </div>
             <div className="w-full md:w-1/2 order-1 md:order-2">
-              <img src="https://picsum.photos/seed/hunkhoi/800/600" alt="Hun khói gác bếp" className="rounded-3xl shadow-lg w-full object-cover aspect-[4/3]" referrerPolicy="no-referrer" />
+              <img src="https://lh3.googleusercontent.com/d/1L8HofwEXeUuuTucZfRjAQr3nJA9uYhWS" alt="Hun khói gác bếp" className="rounded-3xl shadow-lg w-full object-cover aspect-[4/3]" referrerPolicy="no-referrer" />
             </div>
           </div>
         </div>
