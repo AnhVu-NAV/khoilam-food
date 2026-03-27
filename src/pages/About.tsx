@@ -129,7 +129,7 @@ export default function About() {
               </p>
             </div>
             <div className="w-full md:w-1/2 order-1 md:order-2">
-              <img src="https://picsum.photos/seed/nguyenlieu/800/600" alt="Nguyên liệu tươi ngon" className="rounded-3xl shadow-lg w-full object-cover aspect-[4/3]" referrerPolicy="no-referrer" />
+              <img src="https://lh3.googleusercontent.com/d/1JwIIYBADmKvU11P_yFDlAAEmrtdy8jrt" alt="Nguyên liệu tươi ngon" className="rounded-3xl shadow-lg w-full object-cover aspect-[4/3]" referrerPolicy="no-referrer" />
             </div>
           </div>
 

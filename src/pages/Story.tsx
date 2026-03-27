@@ -72,7 +72,7 @@ export default function Story() {
           </div>
           <div className="hidden md:block">
             <div className="aspect-[3/4] rounded-full overflow-hidden border border-kem/10 p-2">
-              <img src="https://picsum.photos/seed/hatdoi/600/800" alt="Hạt dổi" className="w-full h-full object-cover rounded-full" referrerPolicy="no-referrer" />
+              <img src="https://lh3.googleusercontent.com/d/10XOdHf0kT1pw1wLd6Z8JW88rii-z2glk" alt="Hạt dổi" className="w-full h-full object-cover rounded-full" referrerPolicy="no-referrer" />
             </div>
           </div>
         </div>

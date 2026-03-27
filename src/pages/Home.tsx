@@ -50,7 +50,7 @@ export default function Home() {
       <section className="relative h-[85vh] flex items-center justify-center overflow-hidden bg-khoi-lam">
         <div className="absolute inset-0 z-0">
           <img 
-            src="https://picsum.photos/seed/khoibep/1920/1080?blur=2" 
+            src="https://lh3.googleusercontent.com/d/1tJWHRq6Q8M1ep_40TpBnudFeFyWNsgzw"
             alt="Khói bếp Tây Bắc" 
             className="w-full h-full object-cover opacity-40 mix-blend-overlay"
             referrerPolicy="no-referrer"
@@ -255,7 +255,7 @@ export default function Home() {
             <div className="relative">
               <div className="aspect-[4/5] rounded-3xl overflow-hidden border border-kem/10 shadow-2xl relative z-10">
                 <img 
-                  src="https://picsum.photos/seed/app/800/1000" 
+                  src="https://lh3.googleusercontent.com/d/1zjmxR9FVzIeD570qo-9oi7b3kynrG9y6"
                   alt="Giao diện truy xuất" 
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
