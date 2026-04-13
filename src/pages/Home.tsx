@@ -50,7 +50,7 @@ export default function Home() {
       <section className="relative h-[85vh] flex items-center justify-center overflow-hidden bg-khoi-lam">
         <div className="absolute inset-0 z-0">
           <img 
-            src="https://lh3.googleusercontent.com/d/1tJWHRq6Q8M1ep_40TpBnudFeFyWNsgzw"
+            src="https://lh3.googleusercontent.com/d/18n5J1AcH3cIexlFJqMi2AaWcO9VxlnrK"
             alt="Khói bếp Tây Bắc" 
             className="w-full h-full object-cover opacity-40 mix-blend-overlay"
             referrerPolicy="no-referrer"
