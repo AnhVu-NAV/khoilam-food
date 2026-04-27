@@ -21,23 +21,13 @@ export default defineConfig(({mode}) => {
       hmr: process.env.DISABLE_HMR !== 'true',
     },
     build: {
-      chunkSizeWarningLimit: 1000, // Tăng mức cảnh báo lên 1000 kB (1MB)
+      chunkSizeWarningLimit: 1500, // Tăng mức cảnh báo lên 1500 kB (1.5MB)
       rollupOptions: {
         output: {
-          manualChunks(id) {
-            // Tách các thư viện lớn ra thành từng file (chunk) riêng
-            if (id.includes('node_modules')) {
-              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
-                return 'vendor-react';
-              }
-              if (id.includes('recharts')) {
-                return 'vendor-recharts';
-              }
-              if (id.includes('lucide-react')) {
-                return 'vendor-icons';
-              }
-              return 'vendor-core'; // Các thư viện còn lại
-            }
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            'vendor-recharts': ['recharts'],
+            'vendor-icons': ['lucide-react'],
           }
         }
       }
