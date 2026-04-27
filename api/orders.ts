@@ -63,15 +63,17 @@ export default async function handler(req: any, res: any) {
                                 INSERT INTO order_items (
                                     order_id,
                                     product_id,
+                                    combo_id,
                                     quantity,
                                     price,
                                     weight
                                 )
-                                VALUES ($1, $2, $3, $4, $5)
+                                VALUES ($1, $2, $3, $4, $5, $6)
                             `,
                             [
                                 order.id,
-                                item.product_id,
+                                item.product_id || null,
+                                item.combo_id || null,
                                 Number(item.quantity ?? 1),
                                 Number(item.price ?? 0),
                                 item.weight ?? '',

@@ -54,7 +54,8 @@ export default function Checkout() {
                     email,
                     name,
                     items: items.map((i) => ({
-                        product_id: i.product.id,
+                        product_id: i.isCombo ? null : i.product.id,
+                        combo_id: i.isCombo ? i.comboId : null,
                         quantity: i.quantity,
                         weight: i.weight,
                         price: i.price,

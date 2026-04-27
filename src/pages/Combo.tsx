@@ -1,57 +1,54 @@
-import { Link } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Tag, Users } from 'lucide-react';
-
-const combos = [
-    {
-        id: 'combo-met-nho-tien-loi',
-        name: 'Combo Mẹt nhỏ tiện lợi',
-        description:
-            'Set gọn nhẹ, tiện lợi để thưởng thức nhiều vị đặc sản trong một lần mua.',
-        includes: [
-            'Thịt trâu gác bếp (Instant) - 250gr',
-            'Heo bản gác bếp (Instant) - 250gr',
-            'Lạp xưởng hun mía - 250gr',
-            'Tặng kèm 1 gói chẩm chéo ướt / 1 gói chẩm chéo khô',
-        ],
-        price: 459000,
-        badge: 'Tiện lợi',
-    },
-    {
-        id: 'combo-gac-bep-sieu-tiet-kiem',
-        name: 'Combo Gác Bếp Siêu Tiết Kiệm',
-        description:
-            'Set dành cho khách thích vị gác bếp truyền thống với mức giá tiết kiệm hơn khi mua lẻ.',
-        includes: [
-            '500gr thịt trâu gác bếp',
-            '500gr heo bản gác bếp',
-            'Tặng kèm 1 gói chẩm chéo ướt / 1 gói chẩm chéo khô',
-        ],
-        price: 699000,
-        badge: 'Tiết kiệm',
-    },
-    {
-        id: 'combo-tam-lap-vi',
-        name: 'Combo Tam Lạp vị',
-        description:
-            'Bộ sưu tập 3 loại lạp xưởng đặc trưng, phù hợp cho người thích khám phá nhiều hương vị.',
-        includes: [
-            'Lạp xưởng gác bếp - 500gr',
-            'Lạp xưởng hun mía - 500gr',
-            'Lạp xưởng trứng muối - 500gr',
-        ],
-        price: 529000,
-        badge: 'Đậm vị',
-    },
-];
+import { useCart } from '../context/CartContext';
 
 export default function Combo() {
+    const [combos, setCombos] = useState<any[]>([]);
+    const [products, setProducts] = useState<any[]>([]);
+    const { addToCart } = useCart();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        fetch('/api/combos')
+            .then(res => res.json())
+            .then(data => setCombos(Array.isArray(data) ? data : []));
+
+        fetch('/api/products')
+            .then(res => res.json())
+            .then(data => setProducts(Array.isArray(data) ? data : []));
+    }, []);
+
+    const getOriginalPrice = (combo: any) => {
+        if (!combo.items || !products.length) return combo.price;
+        let originalTotal = 0;
+        combo.items.forEach((item: any) => {
+            const product = products.find(p => p.id === item.product_id);
+            if (product) {
+                originalTotal += (product.price || 0) * (item.quantity || 1);
+            }
+        });
+        return Math.max(originalTotal, combo.price);
+    };
+
+    const handleAddToCart = (combo: any) => {
+        const dummyProduct = {
+            id: combo.id,
+            name: combo.name,
+            image: combo.image || '/images/default-combo.jpg',
+            price: combo.price
+        };
+        addToCart(dummyProduct, 1, 'combo', combo.price, true, combo.id);
+        navigate('/gio-hang');
+    };
+
     return (
         <div className="bg-kem min-h-screen py-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-14">
-          <span className="text-vang-logo uppercase tracking-widest text-sm font-semibold mb-4 block">
-            Family Combo
-          </span>
+                    <span className="text-vang-logo uppercase tracking-widest text-sm font-semibold mb-4 block">
+                        Family Combo
+                    </span>
                     <h1 className="font-serif text-5xl md:text-6xl font-bold text-khoi-lam mb-6">
                         Combo gia đình
                     </h1>
@@ -62,76 +59,97 @@ export default function Combo() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {combos.map((combo) => (
-                        <div
-                            key={combo.id}
-                            className="bg-white rounded-3xl border border-khoi-lam/5 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
-                        >
-                            <div className="p-8 border-b border-khoi-lam/5">
-                                <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-                  <span className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-vang-logo/15 text-khoi-lam">
-                    <Tag className="w-4 h-4" />
-                      {combo.badge}
-                  </span>
+                    {combos.map((combo) => {
+                        const originalPrice = getOriginalPrice(combo);
+                        const discount = originalPrice > combo.price ? originalPrice - combo.price : 0;
 
-                                    <span className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full bg-khoi-lam/5 text-khoi-lam/70">
-                    <Users className="w-4 h-4" />
-                    Family set
-                  </span>
-                                </div>
+                        return (
+                            <div
+                                key={combo.id}
+                                className="bg-white rounded-3xl border border-khoi-lam/5 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
+                            >
+                                {combo.image && (
+                                    <div className="w-full h-48 bg-kem/50">
+                                        <img src={combo.image} alt={combo.name} className="w-full h-full object-cover" />
+                                    </div>
+                                )}
+                                <div className="p-8 border-b border-khoi-lam/5">
+                                    <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+                                        <span className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-vang-logo/15 text-khoi-lam">
+                                            <Tag className="w-4 h-4" />
+                                            {combo.badge || 'Trọn vị'}
+                                        </span>
 
-                                <h2 className="font-serif text-2xl font-bold text-khoi-lam mb-3">
-                                    {combo.name}
-                                </h2>
-
-                                <p className="text-khoi-lam/65 leading-relaxed text-sm">
-                                    {combo.description}
-                                </p>
-                            </div>
-
-                            <div className="p-8 flex-grow">
-                                <h3 className="font-semibold text-khoi-lam mb-4">Bao gồm:</h3>
-                                <ul className="space-y-3">
-                                    {combo.includes.map((item) => (
-                                        <li
-                                            key={item}
-                                            className="text-sm text-khoi-lam/70 flex items-start gap-3"
-                                        >
-                                            <span className="mt-1.5 w-2 h-2 rounded-full bg-vang-logo shrink-0"></span>
-                                            <span>{item}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-
-                            <div className="p-8 pt-0">
-                                <div className="border-t border-khoi-lam/10 pt-6">
-                                    <div className="mb-6">
-                                        <p className="text-sm text-khoi-lam/50 mb-1">Giá combo</p>
-                                        <span className="text-2xl font-bold text-do-gach">
-                      {combo.price.toLocaleString('vi-VN')}đ
-                    </span>
+                                        <span className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full bg-khoi-lam/5 text-khoi-lam/70">
+                                            <Users className="w-4 h-4" />
+                                            Family set
+                                        </span>
                                     </div>
 
-                                    <div className="flex gap-3">
-                                        <Link
-                                            to="/san-pham"
-                                            className="flex-1 inline-flex items-center justify-center rounded-xl border border-khoi-lam/10 py-3 px-4 text-sm font-medium text-khoi-lam hover:bg-khoi-lam/5 transition-colors"
-                                        >
-                                            Xem sản phẩm
-                                        </Link>
+                                    <h2 className="font-serif text-2xl font-bold text-khoi-lam mb-3">
+                                        {combo.name}
+                                    </h2>
 
-                                        <button
-                                            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-vang-logo py-3 px-4 text-sm font-bold text-khoi-lam hover:bg-vang-logo/90 transition-colors"
-                                        >
-                                            <ShoppingBag className="w-4 h-4" />
-                                            Đặt combo
-                                        </button>
+                                    <p className="text-khoi-lam/65 leading-relaxed text-sm">
+                                        {combo.description}
+                                    </p>
+                                </div>
+
+                                <div className="p-8 flex-grow">
+                                    <h3 className="font-semibold text-khoi-lam mb-4">Bao gồm:</h3>
+                                    <ul className="space-y-3">
+                                        {(combo.items || []).map((item: any, idx: number) => (
+                                            <li
+                                                key={idx}
+                                                className="text-sm text-khoi-lam/70 flex items-start gap-3"
+                                            >
+                                                <span className="mt-1.5 w-2 h-2 rounded-full bg-vang-logo shrink-0"></span>
+                                                <span>{item.label || item.product_id} x{item.quantity}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+
+                                <div className="p-8 pt-0">
+                                    <div className="border-t border-khoi-lam/10 pt-6">
+                                        <div className="mb-6 flex justify-between items-end">
+                                            <div>
+                                                <p className="text-sm text-khoi-lam/50 mb-1">Giá combo</p>
+                                                <div className="flex flex-col">
+                                                    <span className="text-2xl font-bold text-do-gach">
+                                                        {Number(combo.price).toLocaleString('vi-VN')}đ
+                                                    </span>
+                                                    {discount > 0 && (
+                                                        <span className="text-sm text-khoi-lam/40 line-through">
+                                                            {originalPrice.toLocaleString('vi-VN')}đ
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            {discount > 0 && (
+                                                <div className="text-right">
+                                                    <p className="text-xs text-khoi-lam/50 mb-1">Tiết kiệm</p>
+                                                    <span className="text-sm font-bold text-xanh-rung bg-xanh-rung/10 px-2 py-1 rounded">
+                                                        -{discount.toLocaleString('vi-VN')}đ
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="flex gap-3">
+                                            <button
+                                                onClick={() => handleAddToCart(combo)}
+                                                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-vang-logo py-3 px-4 text-sm font-bold text-khoi-lam hover:bg-vang-logo/90 transition-colors"
+                                            >
+                                                <ShoppingBag className="w-4 h-4" />
+                                                Đặt combo
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 <div className="mt-16 bg-white rounded-3xl border border-khoi-lam/5 p-8 md:p-10 text-center">

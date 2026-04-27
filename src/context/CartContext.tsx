@@ -2,15 +2,17 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { Product } from '../data/products';
 
 interface CartItem {
-    product: Product;
+    product: any;
     quantity: number;
     weight: string;
     price: number;
+    isCombo?: boolean;
+    comboId?: string;
 }
 
 interface CartContextType {
     items: CartItem[];
-    addToCart: (product: Product, quantity: number, weight: string, price: number) => void;
+    addToCart: (product: any, quantity: number, weight: string, price: number, isCombo?: boolean, comboId?: string) => void;
     removeFromCart: (productId: string, weight: string) => void;
     updateQuantity: (productId: string, weight: string, quantity: number) => void;
     clearCart: () => void;
@@ -40,18 +42,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('cart', JSON.stringify(items));
     }, [items]);
 
-    const addToCart = (product: Product, quantity: number, weight: string, price: number) => {
+    const addToCart = (product: any, quantity: number, weight: string, price: number, isCombo?: boolean, comboId?: string) => {
         const normalizedQuantity = Math.max(1, Number(quantity) || 1);
         const normalizedPrice = Math.max(0, Number(price) || 0);
 
         setItems((prev) => {
             const existing = prev.find(
-                (item) => item.product.id === product.id && item.weight === weight
+                (item) => item.product.id === product.id && item.weight === weight && item.isCombo === isCombo
             );
 
             if (existing) {
                 return prev.map((item) =>
-                    item.product.id === product.id && item.weight === weight
+                    item.product.id === product.id && item.weight === weight && item.isCombo === isCombo
                         ? {
                             ...item,
                             quantity: item.quantity + normalizedQuantity,
@@ -68,6 +70,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
                     quantity: normalizedQuantity,
                     weight,
                     price: normalizedPrice,
+                    isCombo,
+                    comboId,
                 },
             ];
         });

@@ -45,6 +45,10 @@ const ensureOrderColumns = async () => {
 
 const ensureOrderItemColumns = async () => {
     await pool.query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS weight VARCHAR(50)`);
+    // Alter order_items to support combos. It needs to happen after combos table exists, 
+    // but ensureOrderItemColumns is called after combos? Wait, I will move this to another function or run it carefully in initDB.
+    // Let's just add the column for now, the foreign key could be added in initDB directly later.
+    await pool.query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS combo_id VARCHAR(255)`);
 };
 
 const seedUsers = async () => {
@@ -210,6 +214,77 @@ const seedBatches = async () => {
     );
 };
 
+const seedCombos = async () => {
+    const combosCountRes = await pool.query<{ count: number }>(
+        `SELECT COUNT(*)::int AS count FROM combos`
+    );
+
+    if (combosCountRes.rows[0]?.count > 0) {
+        return;
+    }
+
+    const combos = [
+        {
+            id: 'combo-met-nho-tien-loi',
+            name: 'Combo Mẹt nhỏ tiện lợi',
+            description: 'Set gọn nhẹ, tiện lợi để thưởng thức nhiều vị đặc sản trong một lần mua.',
+            price: 459000,
+            badge: 'Tiện lợi',
+            items: [
+                { product_id: 'trau-gac-bep', quantity: 1, label: 'Thịt trâu gác bếp (Instant) - 250gr' },
+                { product_id: 'heo-gac-bep', quantity: 1, label: 'Heo bản gác bếp (Instant) - 250gr' },
+                { product_id: 'lap-xuong-hun-mia', quantity: 1, label: 'Lạp xưởng hun mía - 250gr' },
+                { product_id: null, quantity: 1, label: 'Tặng kèm 1 gói chẩm chéo ướt / 1 gói chẩm chéo khô' }
+            ]
+        },
+        {
+            id: 'combo-gac-bep-sieu-tiet-kiem',
+            name: 'Combo Gác Bếp Siêu Tiết Kiệm',
+            description: 'Set dành cho khách thích vị gác bếp truyền thống với mức giá tiết kiệm hơn khi mua lẻ.',
+            price: 699000,
+            badge: 'Tiết kiệm',
+            items: [
+                { product_id: 'trau-gac-bep', quantity: 2, label: '500gr thịt trâu gác bếp' },
+                { product_id: 'heo-gac-bep', quantity: 2, label: '500gr heo bản gác bếp' },
+                { product_id: null, quantity: 1, label: 'Tặng kèm 1 gói chẩm chéo ướt / 1 gói chẩm chéo khô' }
+            ]
+        },
+        {
+            id: 'combo-tam-lap-vi',
+            name: 'Combo Tam Lạp vị',
+            description: 'Bộ sưu tập 3 loại lạp xưởng đặc trưng, phù hợp cho người thích khám phá nhiều hương vị.',
+            price: 529000,
+            badge: 'Đậm vị',
+            items: [
+                { product_id: 'lap-xuong-gac-bep', quantity: 2, label: 'Lạp xưởng gác bếp - 500gr' },
+                { product_id: 'lap-xuong-hun-mia', quantity: 2, label: 'Lạp xưởng hun mía - 500gr' },
+                { product_id: 'lap-xuong-trung-muoi', quantity: 2, label: 'Lạp xưởng trứng muối - 500gr' }
+            ]
+        }
+    ];
+
+    for (const combo of combos) {
+        await pool.query(
+            `
+                INSERT INTO combos (id, name, description, price, badge)
+                VALUES ($1, $2, $3, $4, $5)
+                ON CONFLICT (id) DO NOTHING
+            `,
+            [combo.id, combo.name, combo.description, combo.price, combo.badge]
+        );
+
+        for (const item of combo.items) {
+            await pool.query(
+                `
+                    INSERT INTO combo_items (combo_id, product_id, quantity, label)
+                    VALUES ($1, $2, $3, $4)
+                `,
+                [combo.id, item.product_id, item.quantity, item.label]
+            );
+        }
+    }
+};
+
 export const initDB = async () => {
     if (globalThis.__khoiLamInitPromise) {
         return globalThis.__khoiLamInitPromise;
@@ -248,6 +323,27 @@ export const initDB = async () => {
         `);
 
         await ensureProductColumns();
+
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS combos (
+                id VARCHAR(255) PRIMARY KEY,
+                name VARCHAR(255),
+                description TEXT,
+                price INTEGER,
+                badge VARCHAR(50),
+                image TEXT
+            );
+        `);
+
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS combo_items (
+                id BIGSERIAL PRIMARY KEY,
+                combo_id VARCHAR(255) REFERENCES combos(id) ON DELETE CASCADE,
+                product_id VARCHAR(255) REFERENCES products(id) ON DELETE SET NULL,
+                quantity INTEGER,
+                label TEXT
+            );
+        `);
 
         await pool.query(`
             CREATE TABLE IF NOT EXISTS batches (
@@ -300,6 +396,7 @@ export const initDB = async () => {
 
         await seedUsers();
         await seedProducts();
+        await seedCombos();
         await seedCoupons();
         await seedBatches();
     })().catch((error) => {
