@@ -46,7 +46,7 @@ export default function ComboDetail() {
             <div className="bg-kem min-h-screen py-16">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <h1 className="text-3xl font-bold text-khoi-lam mb-4">Không tìm thấy combo</h1>
-                    <Link to="/combos" className="text-vang-logo hover:underline">Quay lại danh sách combo</Link>
+                    <Link to="/combo" className="text-vang-logo hover:underline">Quay lại danh sách combo</Link>
                 </div>
             </div>
         );
