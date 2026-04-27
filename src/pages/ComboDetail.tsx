@@ -100,7 +100,7 @@ export default function ComboDetail() {
     return (
         <div className="bg-kem min-h-screen py-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <Link to="/combos" className="inline-flex items-center text-khoi-lam/70 hover:text-khoi-lam mb-8 transition-colors">
+                <Link to="/combo" className="inline-flex items-center text-khoi-lam/70 hover:text-khoi-lam mb-8 transition-colors">
                     <ArrowLeft className="w-5 h-5 mr-2" />
                     Quay lại Combos
                 </Link>
