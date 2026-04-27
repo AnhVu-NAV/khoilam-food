@@ -229,17 +229,15 @@ export default function AdminGifts() {
                         </h2>
 
                         <form onSubmit={handleSave} className="space-y-6">
-                            <div className="grid grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-khoi-lam/70 mb-2">Tên Quà Tặng</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={giftForm.name}
-                                        onChange={(e) => setGiftForm({ ...giftForm, name: e.target.value })}
-                                        className="w-full px-4 py-3 rounded-xl bg-kem/30 border border-khoi-lam/10 focus:outline-none focus:border-khoi-lam/30"
-                                    />
-                                </div>
+                            <div>
+                                <label className="block text-sm font-medium text-khoi-lam/70 mb-2">Tên Quà Tặng</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={giftForm.name}
+                                    onChange={(e) => setGiftForm({ ...giftForm, name: e.target.value })}
+                                    className="w-full px-4 py-3 rounded-xl bg-kem/30 border border-khoi-lam/10 focus:outline-none focus:border-khoi-lam/30"
+                                />
                             </div>
                             
                             <div>

@@ -59,18 +59,26 @@ export default function ComboDetail() {
         let itemPrice = 0;
         
         if (product) {
-            if (item.weight) {
-                // Parse weight prices
-                const weightPricesStr = product.weightPrices || '';
-                const parts = (typeof weightPricesStr === 'string' ? weightPricesStr : '').split(',').map(s => s.trim()).filter(Boolean);
-                for (const part of parts) {
-                    const [w, p] = part.split(':').map(s => s.trim());
-                    if (w === item.weight) {
-                        itemPrice = Number(p);
-                        break;
-                    }
+            // Try weight-specific price first
+            if (item.weight && product.weight_prices) {
+                const wp = typeof product.weight_prices === 'string' 
+                    ? JSON.parse(product.weight_prices) 
+                    : product.weight_prices;
+                if (wp[item.weight]) {
+                    itemPrice = Number(wp[item.weight]);
                 }
-            } else {
+            }
+            // Also try weightPrices (camelCase from frontend)
+            if (!itemPrice && item.weight && product.weightPrices) {
+                const wp = typeof product.weightPrices === 'string'
+                    ? JSON.parse(product.weightPrices)
+                    : product.weightPrices;
+                if (wp[item.weight]) {
+                    itemPrice = Number(wp[item.weight]);
+                }
+            }
+            // Fallback to base price
+            if (!itemPrice) {
                 itemPrice = Number(product.price || 0);
             }
         }
@@ -141,7 +149,7 @@ export default function ComboDetail() {
                                     <div key={idx} className="flex justify-between items-center p-4 bg-white rounded-2xl border border-khoi-lam/5 shadow-sm">
                                         <div className="flex items-center gap-4">
                                             {item.product?.image ? (
-                                                <img src={item.product.image} alt={item.label} className="w-16 h-16 rounded-xl object-cover" />
+                                                <img src={item.product.image} alt={item.label || item.product?.name} className="w-16 h-16 rounded-xl object-cover" />
                                             ) : (
                                                 <div className="w-16 h-16 bg-kem rounded-xl flex items-center justify-center">
                                                     <Package className="w-6 h-6 text-khoi-lam/30" />
@@ -149,7 +157,7 @@ export default function ComboDetail() {
                                             )}
                                             <div>
                                                 <p className="font-medium text-khoi-lam text-lg">
-                                                    {item.label}
+                                                    {item.label || item.product?.name || 'Sản phẩm'}
                                                 </p>
                                                 <p className="text-sm text-khoi-lam/60">
                                                     Số lượng: {item.quantity} {item.weight ? `- Phân loại: ${item.weight}` : ''}
@@ -160,7 +168,7 @@ export default function ComboDetail() {
                                             {item.totalItemPrice > 0 ? (
                                                 <span className="font-medium text-khoi-lam">{item.totalItemPrice.toLocaleString('vi-VN')}đ</span>
                                             ) : (
-                                                <span className="font-medium text-xanh-rung">Quà tặng</span>
+                                                <span className="font-medium text-xanh-rung">{item.product_id ? 'Đang cập nhật giá' : 'Tặng kèm'}</span>
                                             )}
                                         </div>
                                     </div>
