@@ -91,10 +91,10 @@ export default function Gift() {
 
                                     <div className="flex gap-3">
                                         <Link
-                                            to="/san-pham"
+                                            to={`/qua-tang/${giftSet.id}`}
                                             className="flex-1 inline-flex items-center justify-center rounded-xl border border-khoi-lam/10 py-3 px-4 text-sm font-medium text-khoi-lam hover:bg-khoi-lam/5 transition-colors"
                                         >
-                                            Xem sản phẩm
+                                            Xem chi tiết
                                         </Link>
 
                                         <button

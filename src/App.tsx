@@ -15,6 +15,7 @@ import Admin from './pages/Admin';
 import Combo from './pages/Combo';
 import ComboDetail from './pages/ComboDetail';
 import Gift from './pages/Gift';
+import GiftDetail from './pages/GiftDetail';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 
@@ -40,6 +41,7 @@ export default function App() {
                             <Route path="combo" element={<Combo />} />
                             <Route path="combo/:id" element={<ComboDetail />} />
                             <Route path="qua-tang" element={<Gift />} />
+                            <Route path="qua-tang/:id" element={<GiftDetail />} />
 
                             {/* Fallback for undefined routes */}
                             <Route path="*" element={<Home />} />

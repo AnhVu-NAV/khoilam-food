@@ -137,10 +137,12 @@ export default function AdminCombos() {
         });
     };
 
-    const updateItem = (index: number, field: string, value: any) => {
-        const newItems = [...comboForm.items];
-        newItems[index] = { ...newItems[index], [field]: value };
-        setComboForm({ ...comboForm, items: newItems });
+    const updateItem = (index: number, updates: Record<string, any>) => {
+        setComboForm(prev => {
+            const newItems = [...prev.items];
+            newItems[index] = { ...newItems[index], ...updates };
+            return { ...prev, items: newItems };
+        });
     };
 
     const removeItem = (index: number) => {
@@ -310,8 +312,7 @@ export default function AdminCombos() {
                                                 <select
                                                     value={item.product_id || ''}
                                                     onChange={(e) => {
-                                                        updateItem(idx, 'product_id', e.target.value);
-                                                        updateItem(idx, 'weight', '');
+                                                        updateItem(idx, { product_id: e.target.value, weight: '' });
                                                     }}
                                                     className="w-full px-3 py-2 text-sm rounded bg-kem/30 border border-khoi-lam/10"
                                                 >
@@ -328,7 +329,7 @@ export default function AdminCombos() {
                                                         return (
                                                             <select
                                                                 value={item.weight || ''}
-                                                                onChange={(e) => updateItem(idx, 'weight', e.target.value)}
+                                                                onChange={(e) => updateItem(idx, { weight: e.target.value })}
                                                                 className="w-full mt-2 px-3 py-2 text-sm rounded bg-kem/30 border border-khoi-lam/10"
                                                             >
                                                                 <option value="">-- Chọn phân loại (không bắt buộc) --</option>
@@ -344,7 +345,7 @@ export default function AdminCombos() {
                                                     type="text"
                                                     placeholder="Nhãn hiển thị (ví dụ: 500gr thịt trâu)"
                                                     value={item.label}
-                                                    onChange={(e) => updateItem(idx, 'label', e.target.value)}
+                                                    onChange={(e) => updateItem(idx, { label: e.target.value })}
                                                     className="w-full mt-2 px-3 py-2 text-sm rounded bg-kem/30 border border-khoi-lam/10"
                                                 />
                                             </div>
@@ -352,7 +353,7 @@ export default function AdminCombos() {
                                                 type="number"
                                                 min="1"
                                                 value={item.quantity}
-                                                onChange={(e) => updateItem(idx, 'quantity', parseInt(e.target.value))}
+                                                onChange={(e) => updateItem(idx, { quantity: parseInt(e.target.value) })}
                                                 className="w-20 px-3 py-2 text-sm rounded bg-kem/30 border border-khoi-lam/10"
                                             />
                                             <button type="button" onClick={() => removeItem(idx)} className="text-do-gach py-2">
