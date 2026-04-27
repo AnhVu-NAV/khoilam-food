@@ -38,7 +38,7 @@ export default function Account() {
       setOrderItems([]);
     } else {
       setExpandedOrder(orderId);
-      const res = await fetch(`/api/order-items?id=${orderId}`)
+      const res = await fetch(`/api/orders?action=items&id=${orderId}`)
       const data = await res.json();
       setOrderItems(data);
     }
@@ -49,7 +49,7 @@ export default function Account() {
         if (!confirmCancel) return;
 
         try {
-            const res = await fetch(`/api/order-status?id=${orderId}`, {
+            const res = await fetch(`/api/orders?action=status&id=${orderId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

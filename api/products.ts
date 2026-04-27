@@ -60,7 +60,101 @@ function normalizeProduct(product: any) {
 export default async function handler(req: any, res: any) {
     try {
         await initDB();
+        const id = req.query?.id;
 
+        // If ID is provided, handle single item operations
+        if (id && !Array.isArray(id)) {
+            if (req.method === 'GET') {
+                const result = await pool.query(`SELECT * FROM products WHERE id = $1`, [id]);
+
+                if ((result.rowCount ?? 0) === 0) {
+                    return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm' });
+                }
+
+                return res.json(normalizeProduct(result.rows[0]));
+            }
+
+            if (req.method === 'PUT') {
+                const {
+                    name,
+                    description,
+                    ingredients,
+                    storage,
+                    usage,
+                    price,
+                    category,
+                    image,
+                    weights,
+                    stock,
+                    weightPrices,
+                } = req.body || {};
+
+                const normalizedWeights = Array.isArray(weights)
+                    ? weights.map((w: string) => w.trim()).filter(Boolean)
+                    : [];
+
+                const parsedWeightPrices = parseWeightPrices(weightPrices);
+                const firstWeight = normalizedWeights[0];
+                const basePrice =
+                    (firstWeight && parsedWeightPrices[firstWeight]) || Number(price ?? 0);
+
+                const result = await pool.query(
+                    `
+              UPDATE products
+              SET name = $1,
+                  description = $2,
+                  ingredients = $3,
+                  storage = $4,
+                  usage = $5,
+                  price = $6,
+                  category = $7,
+                  image = $8,
+                  weights = $9,
+                  stock = $10,
+                  weight_prices = $11
+              WHERE id = $12
+              RETURNING *
+            `,
+                    [
+                        name ?? '',
+                        description ?? '',
+                        ingredients ?? '',
+                        storage ?? '',
+                        usage ?? '',
+                        Number(basePrice),
+                        category ?? '',
+                        image ?? '',
+                        normalizedWeights.join(','),
+                        Number(stock ?? 0),
+                        JSON.stringify(parsedWeightPrices),
+                        id,
+                    ]
+                );
+
+                if ((result.rowCount ?? 0) === 0) {
+                    return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm' });
+                }
+
+                return res.json({
+                    success: true,
+                    product: normalizeProduct(result.rows[0]),
+                });
+            }
+
+            if (req.method === 'DELETE') {
+                const result = await pool.query(`DELETE FROM products WHERE id = $1 RETURNING id`, [id]);
+
+                if ((result.rowCount ?? 0) === 0) {
+                    return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm' });
+                }
+
+                return res.json({ success: true });
+            }
+
+            return res.status(405).json({ success: false, message: 'Method not allowed for specific item' });
+        }
+
+        // If no ID is provided, handle collection operations
         if (req.method === 'GET') {
             const result = await pool.query(`SELECT * FROM products ORDER BY name ASC`);
             return res.json(result.rows.map(normalizeProduct));

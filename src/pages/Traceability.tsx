@@ -30,7 +30,7 @@ export default function Traceability() {
     setError('');
     
     try {
-      const res = await fetch(`/api/batch?id=${batchId}`);
+      const res = await fetch(`/api/batches?id=${batchId}`);
       const data = await res.json();
       
       if (data.success) {

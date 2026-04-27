@@ -3,6 +3,21 @@ import pool, { initDB } from '../server/db.js';
 export default async function handler(req: any, res: any) {
     try {
         await initDB();
+        const code = req.query?.code;
+
+        if (code && !Array.isArray(code)) {
+            if (req.method === 'PUT') {
+                const { is_active } = req.body || {};
+
+                await pool.query(`UPDATE coupons SET is_active = $1 WHERE code = $2`, [
+                    Boolean(is_active),
+                    code,
+                ]);
+
+                return res.json({ success: true });
+            }
+            return res.status(405).json({ success: false, message: 'Method not allowed for specific coupon' });
+        }
 
         if (req.method === 'GET') {
             const couponsRes = await pool.query(`SELECT * FROM coupons ORDER BY code ASC`);
@@ -10,12 +25,12 @@ export default async function handler(req: any, res: any) {
         }
 
         if (req.method === 'POST') {
-            const { code, discount_percent, action } = req.body || {};
+            const { code: newCode, discount_percent, action } = req.body || {};
 
             if (action === 'validate') {
                 const couponRes = await pool.query(
                     `SELECT * FROM coupons WHERE code = $1 AND is_active = TRUE`,
-                    [code]
+                    [newCode]
                 );
 
                 const coupon = couponRes.rows[0];
@@ -33,7 +48,7 @@ export default async function handler(req: any, res: any) {
             }
 
             await pool.query(`INSERT INTO coupons (code, discount_percent) VALUES ($1, $2)`, [
-                code,
+                newCode,
                 Number(discount_percent ?? 0),
             ]);
 
@@ -43,6 +58,6 @@ export default async function handler(req: any, res: any) {
         return res.status(405).json({ success: false, message: 'Method not allowed' });
     } catch (error: any) {
         console.error('Coupons error:', error);
-        return res.status(400).json({ success: false, message: 'Mã đã tồn tại hoặc lỗi server' });
+        return res.status(400).json({ success: false, message: 'Lỗi xử lý coupon hoặc server' });
     }
 }

@@ -67,7 +67,7 @@ export default function AdminCombos() {
         const payload = { ...comboForm };
         const method = editingCombo ? 'PUT' : 'POST';
         const url = editingCombo
-            ? `/api/combo?id=${encodeURIComponent(comboForm.id)}`
+            ? `/api/combos?id=${encodeURIComponent(comboForm.id)}`
             : '/api/combos';
 
         const res = await fetch(url, {
@@ -88,7 +88,7 @@ export default function AdminCombos() {
     const handleDelete = async (id: string) => {
         if (confirm('Bạn có chắc chắn muốn xóa combo này?')) {
             try {
-                const res = await fetch(`/api/combo?id=${encodeURIComponent(id)}`, {
+                const res = await fetch(`/api/combos?id=${encodeURIComponent(id)}`, {
                     method: 'DELETE',
                 });
                 if (!res.ok) throw new Error('Network response error');

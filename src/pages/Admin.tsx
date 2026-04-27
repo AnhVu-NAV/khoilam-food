@@ -166,7 +166,7 @@ export default function Admin() {
             if (cancel_reason === null) return;
         }
 
-        await fetch(`/api/order-status?id=${id}`, {
+        await fetch(`/api/orders?action=status&id=${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status, cancel_reason }),
@@ -181,7 +181,7 @@ export default function Admin() {
             setOrderItems([]);
         } else {
             setExpandedOrder(orderId);
-            const res = await fetch(`/api/order-items?id=${orderId}`);
+            const res = await fetch(`/api/orders?action=items&id=${orderId}`);
             const data = await res.json();
             setOrderItems(Array.isArray(data) ? data : []);
         }
@@ -279,7 +279,7 @@ export default function Admin() {
 
         const method = editingProduct ? 'PUT' : 'POST';
         const url = editingProduct
-            ? `/api/product?id=${encodeURIComponent(productForm.id)}`
+            ? `/api/products?id=${encodeURIComponent(productForm.id)}`
             : '/api/products';
 
         const res = await fetch(url, {
@@ -300,7 +300,7 @@ export default function Admin() {
     const handleDeleteProduct = async (id: string) => {
         if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
             try {
-                const res = await fetch(`/api/product?id=${encodeURIComponent(id)}`, {
+                const res = await fetch(`/api/products?id=${encodeURIComponent(id)}`, {
                     method: 'DELETE',
                 });
 
@@ -371,7 +371,7 @@ export default function Admin() {
     };
 
     const toggleCouponStatus = async (code: string, currentStatus: number) => {
-        await fetch(`/api/coupon-status?code=${encodeURIComponent(code)}`, {
+        await fetch(`/api/coupons?code=${encodeURIComponent(code)}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ is_active: currentStatus === 1 ? 0 : 1 }),
@@ -444,7 +444,7 @@ export default function Admin() {
 
         const method = editingBatch ? 'PUT' : 'POST';
         const url = editingBatch
-            ? `/api/batch?id=${encodeURIComponent(batchForm.id)}`
+            ? `/api/batches?id=${encodeURIComponent(batchForm.id)}`
             : '/api/batches';
 
         const res = await fetch(url, {
@@ -472,7 +472,7 @@ export default function Admin() {
     const handleDeleteBatch = async (id: string) => {
         if (confirm('Bạn có chắc chắn muốn xóa lô sản xuất này?')) {
             try {
-                const res = await fetch(`/api/batch?id=${encodeURIComponent(id)}`, {
+                const res = await fetch(`/api/batches?id=${encodeURIComponent(id)}`, {
                     method: 'DELETE',
                 });
 
