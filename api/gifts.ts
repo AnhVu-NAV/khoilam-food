@@ -8,21 +8,21 @@ export default async function handler(req: any, res: any) {
         // Single item operations
         if (id && !Array.isArray(id)) {
             if (req.method === 'GET') {
-                const comboRes = await pool.query(`SELECT * FROM combos WHERE id = $1`, [id]);
-                if ((comboRes.rowCount ?? 0) === 0) return res.status(404).json({ success: false, message: 'Không tìm thấy combo' });
+                const giftRes = await pool.query(`SELECT * FROM gifts WHERE id = $1`, [id]);
+                if ((giftRes.rowCount ?? 0) === 0) return res.status(404).json({ success: false, message: 'Không tìm thấy quà tặng' });
                 
-                const itemsRes = await pool.query(`SELECT * FROM combo_items WHERE combo_id = $1`, [id]);
-                const combo = { ...comboRes.rows[0], items: itemsRes.rows };
-                return res.json(combo);
+                const itemsRes = await pool.query(`SELECT * FROM gift_items WHERE gift_id = $1`, [id]);
+                const gift = { ...giftRes.rows[0], items: itemsRes.rows };
+                return res.json({ success: true, gift });
             }
 
             if (req.method === 'PUT') {
                 const { name, description, price, badge, image, items } = req.body || {};
                 await pool.query('BEGIN');
                 try {
-                    const comboRes = await pool.query(
+                    const giftRes = await pool.query(
                         `
-                            UPDATE combos
+                            UPDATE gifts
                             SET name = $1, description = $2, price = $3, badge = $4, image = $5
                             WHERE id = $6
                             RETURNING *
@@ -30,22 +30,22 @@ export default async function handler(req: any, res: any) {
                         [name, description, price, badge, image, id]
                     );
                     
-                    if ((comboRes.rowCount ?? 0) === 0) {
+                    if ((giftRes.rowCount ?? 0) === 0) {
                         await pool.query('ROLLBACK');
-                        return res.status(404).json({ success: false, message: 'Không tìm thấy combo' });
+                        return res.status(404).json({ success: false, message: 'Không tìm thấy quà tặng' });
                     }
 
-                    await pool.query(`DELETE FROM combo_items WHERE combo_id = $1`, [id]);
+                    await pool.query(`DELETE FROM gift_items WHERE gift_id = $1`, [id]);
                     if (Array.isArray(items)) {
                         for (const item of items) {
                             await pool.query(
-                                `INSERT INTO combo_items (combo_id, product_id, weight, quantity, label) VALUES ($1, $2, $3, $4, $5)`,
+                                `INSERT INTO gift_items (gift_id, product_id, weight, quantity, label) VALUES ($1, $2, $3, $4, $5)`,
                                 [id, item.product_id || null, item.weight || null, item.quantity, item.label]
                             );
                         }
                     }
                     await pool.query('COMMIT');
-                    return res.json({ success: true, combo: comboRes.rows[0] });
+                    return res.json({ success: true, gift: giftRes.rows[0] });
                 } catch (err) {
                     await pool.query('ROLLBACK');
                     throw err;
@@ -53,9 +53,9 @@ export default async function handler(req: any, res: any) {
             }
 
             if (req.method === 'DELETE') {
-                const result = await pool.query(`DELETE FROM combos WHERE id = $1 RETURNING id`, [id]);
+                const result = await pool.query(`DELETE FROM gifts WHERE id = $1 RETURNING id`, [id]);
                 if ((result.rowCount ?? 0) === 0) {
-                    return res.status(404).json({ success: false, message: 'Không tìm thấy combo' });
+                    return res.status(404).json({ success: false, message: 'Không tìm thấy quà tặng' });
                 }
                 return res.json({ success: true });
             }
@@ -65,15 +65,15 @@ export default async function handler(req: any, res: any) {
 
         // Collection operations
         if (req.method === 'GET') {
-            const combosResult = await pool.query(`SELECT * FROM combos ORDER BY price ASC`);
-            const itemsResult = await pool.query(`SELECT * FROM combo_items`);
+            const giftsResult = await pool.query(`SELECT * FROM gifts ORDER BY price ASC`);
+            const itemsResult = await pool.query(`SELECT * FROM gift_items`);
             
-            const combos = combosResult.rows.map((combo) => {
-                const items = itemsResult.rows.filter(i => i.combo_id === combo.id);
-                return { ...combo, items };
+            const gifts = giftsResult.rows.map((gift) => {
+                const items = itemsResult.rows.filter(i => i.gift_id === gift.id);
+                return { ...gift, items };
             });
 
-            return res.json(combos);
+            return res.json(gifts);
         }
 
         if (req.method === 'POST') {
@@ -82,7 +82,7 @@ export default async function handler(req: any, res: any) {
             try {
                 const result = await pool.query(
                     `
-                        INSERT INTO combos (id, name, description, price, badge, image)
+                        INSERT INTO gifts (id, name, description, price, badge, image)
                         VALUES ($1, $2, $3, $4, $5, $6)
                         RETURNING *
                     `,
@@ -92,13 +92,13 @@ export default async function handler(req: any, res: any) {
                 if (Array.isArray(items)) {
                     for (const item of items) {
                         await pool.query(
-                            `INSERT INTO combo_items (combo_id, product_id, weight, quantity, label) VALUES ($1, $2, $3, $4, $5)`,
+                            `INSERT INTO gift_items (gift_id, product_id, weight, quantity, label) VALUES ($1, $2, $3, $4, $5)`,
                             [id, item.product_id || null, item.weight || null, item.quantity, item.label]
                         );
                     }
                 }
                 await pool.query('COMMIT');
-                return res.status(201).json({ success: true, combo: result.rows[0] });
+                return res.status(201).json({ success: true, gift: result.rows[0] });
             } catch (err) {
                 await pool.query('ROLLBACK');
                 throw err;
@@ -107,7 +107,7 @@ export default async function handler(req: any, res: any) {
 
         return res.status(405).json({ success: false, message: 'Method not allowed' });
     } catch (error: any) {
-        console.error('Combos error:', error);
+        console.error('Gifts error:', error);
         return res.status(500).json({
             success: false,
             message: error?.message || 'Lỗi server',

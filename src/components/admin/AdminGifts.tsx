@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Package, Plus, Edit, Trash2 } from 'lucide-react';
 
-export default function AdminCombos() {
-    const [combos, setCombos] = useState<any[]>([]);
+export default function AdminGifts() {
+    const [gifts, setGifts] = useState<any[]>([]);
     const [products, setProducts] = useState<any[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingCombo, setEditingCombo] = useState<any>(null);
+    const [editingGift, setEditingGift] = useState<any>(null);
     const [isUploading, setIsUploading] = useState(false);
-    const [comboForm, setComboForm] = useState({
+    const [giftForm, setGiftForm] = useState({
         id: '',
         name: '',
         description: '',
@@ -23,9 +23,9 @@ export default function AdminCombos() {
     }, []);
 
     const fetchData = async () => {
-        const res = await fetch('/api/combos');
+        const res = await fetch('/api/gifts');
         const data = await res.json();
-        setCombos(Array.isArray(data) ? data : []);
+        setGifts(Array.isArray(data) ? data : []);
     };
 
     const fetchProducts = async () => {
@@ -34,21 +34,21 @@ export default function AdminCombos() {
         setProducts(Array.isArray(data) ? data : []);
     };
 
-    const openModal = (combo: any = null) => {
-        if (combo) {
-            setEditingCombo(combo);
-            setComboForm({
-                id: combo.id || '',
-                name: combo.name || '',
-                description: combo.description || '',
-                price: Number(combo.price || 0),
-                badge: combo.badge || '',
-                image: combo.image || '',
-                items: Array.isArray(combo.items) ? combo.items : [],
+    const openModal = (gift: any = null) => {
+        if (gift) {
+            setEditingGift(gift);
+            setGiftForm({
+                id: gift.id || '',
+                name: gift.name || '',
+                description: gift.description || '',
+                price: Number(gift.price || 0),
+                badge: gift.badge || '',
+                image: gift.image || '',
+                items: Array.isArray(gift.items) ? gift.items : [],
             });
         } else {
-            setEditingCombo(null);
-            setComboForm({
+            setEditingGift(null);
+            setGiftForm({
                 id: '',
                 name: '',
                 description: '',
@@ -64,11 +64,11 @@ export default function AdminCombos() {
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const payload = { ...comboForm };
-        const method = editingCombo ? 'PUT' : 'POST';
-        const url = editingCombo
-            ? `/api/combos?id=${encodeURIComponent(comboForm.id)}`
-            : '/api/combos';
+        const payload = { ...giftForm };
+        const method = editingGift ? 'PUT' : 'POST';
+        const url = editingGift
+            ? `/api/gifts?id=${encodeURIComponent(giftForm.id)}`
+            : '/api/gifts';
 
         const res = await fetch(url, {
             method,
@@ -81,14 +81,14 @@ export default function AdminCombos() {
             fetchData();
         } else {
             const data = await res.json().catch(() => null);
-            alert(data?.message || 'Có lỗi xảy ra khi lưu combo');
+            alert(data?.message || 'Có lỗi xảy ra khi lưu quà tặng');
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (confirm('Bạn có chắc chắn muốn xóa combo này?')) {
+        if (confirm('Bạn có chắc chắn muốn xóa quà tặng này?')) {
             try {
-                const res = await fetch(`/api/combos?id=${encodeURIComponent(id)}`, {
+                const res = await fetch(`/api/gifts?id=${encodeURIComponent(id)}`, {
                     method: 'DELETE',
                 });
                 if (!res.ok) throw new Error('Network response error');
@@ -96,10 +96,10 @@ export default function AdminCombos() {
                 if (data.success) {
                     fetchData();
                 } else {
-                    alert(data.message || 'Không thể xóa combo.');
+                    alert(data.message || 'Không thể xóa quà tặng.');
                 }
             } catch (error) {
-                alert('Lỗi kết nối khi xóa combo');
+                alert('Lỗi kết nối khi xóa quà tặng');
             }
         }
     };
@@ -119,7 +119,7 @@ export default function AdminCombos() {
             });
             const data = await res.json();
             if (data.success) {
-                setComboForm((prev) => ({ ...prev, image: data.url }));
+                setGiftForm((prev) => ({ ...prev, image: data.url }));
             } else {
                 alert('Lỗi tải ảnh lên: ' + data.message);
             }
@@ -131,33 +131,33 @@ export default function AdminCombos() {
     };
 
     const addItem = () => {
-        setComboForm({
-            ...comboForm,
-            items: [...comboForm.items, { product_id: '', weight: '', quantity: 1, label: '' }],
+        setGiftForm({
+            ...giftForm,
+            items: [...giftForm.items, { product_id: '', weight: '', quantity: 1, label: '' }],
         });
     };
 
     const updateItem = (index: number, field: string, value: any) => {
-        const newItems = [...comboForm.items];
+        const newItems = [...giftForm.items];
         newItems[index] = { ...newItems[index], [field]: value };
-        setComboForm({ ...comboForm, items: newItems });
+        setGiftForm({ ...giftForm, items: newItems });
     };
 
     const removeItem = (index: number) => {
-        const newItems = [...comboForm.items];
+        const newItems = [...giftForm.items];
         newItems.splice(index, 1);
-        setComboForm({ ...comboForm, items: newItems });
+        setGiftForm({ ...giftForm, items: newItems });
     };
 
     return (
         <div>
             <div className="flex justify-between items-center mb-6">
-                <h2 className="font-serif text-2xl font-bold text-khoi-lam">Quản lý Combos</h2>
+                <h2 className="font-serif text-2xl font-bold text-khoi-lam">Quản lý Quà Tặng</h2>
                 <button
                     onClick={() => openModal()}
                     className="bg-vang-logo text-khoi-lam px-4 py-2 rounded-xl font-bold hover:bg-vang-logo/90 transition-colors flex items-center gap-2"
                 >
-                    <Plus className="w-4 h-4" /> Thêm Combo
+                    <Plus className="w-4 h-4" /> Thêm Quà Tặng
                 </button>
             </div>
 
@@ -165,7 +165,7 @@ export default function AdminCombos() {
                 <table className="w-full text-left">
                     <thead>
                     <tr className="border-b border-khoi-lam/10 text-khoi-lam/60 text-sm">
-                        <th className="pb-4 font-medium">Combo</th>
+                        <th className="pb-4 font-medium">Quà Tặng</th>
                         <th className="pb-4 font-medium">Giá</th>
                         <th className="pb-4 font-medium">Badge</th>
                         <th className="pb-4 font-medium">Sản phẩm bao gồm</th>
@@ -173,7 +173,7 @@ export default function AdminCombos() {
                     </tr>
                     </thead>
                     <tbody className="divide-y divide-khoi-lam/5">
-                    {combos.map((c) => (
+                    {gifts.map((c) => (
                         <tr key={c.id}>
                             <td className="py-4 flex items-center gap-4">
                                 {c.image && (
@@ -215,7 +215,7 @@ export default function AdminCombos() {
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-3xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         <h2 className="font-serif text-2xl font-bold text-khoi-lam mb-6">
-                            {editingCombo ? 'Chỉnh sửa Combo' : 'Thêm Combo mới'}
+                            {editingGift ? 'Chỉnh sửa Quà Tặng' : 'Thêm Quà Tặng mới'}
                         </h2>
 
                         <form onSubmit={handleSave} className="space-y-6">
@@ -225,19 +225,19 @@ export default function AdminCombos() {
                                     <input
                                         type="text"
                                         required
-                                        disabled={!!editingCombo}
-                                        value={comboForm.id}
-                                        onChange={(e) => setComboForm({ ...comboForm, id: e.target.value })}
+                                        disabled={!!editingGift}
+                                        value={giftForm.id}
+                                        onChange={(e) => setGiftForm({ ...giftForm, id: e.target.value })}
                                         className="w-full px-4 py-3 rounded-xl bg-kem/30 border border-khoi-lam/10 focus:outline-none focus:border-khoi-lam/30"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-khoi-lam/70 mb-2">Tên Combo</label>
+                                    <label className="block text-sm font-medium text-khoi-lam/70 mb-2">Tên Quà Tặng</label>
                                     <input
                                         type="text"
                                         required
-                                        value={comboForm.name}
-                                        onChange={(e) => setComboForm({ ...comboForm, name: e.target.value })}
+                                        value={giftForm.name}
+                                        onChange={(e) => setGiftForm({ ...giftForm, name: e.target.value })}
                                         className="w-full px-4 py-3 rounded-xl bg-kem/30 border border-khoi-lam/10 focus:outline-none focus:border-khoi-lam/30"
                                     />
                                 </div>
@@ -246,8 +246,8 @@ export default function AdminCombos() {
                             <div>
                                 <label className="block text-sm font-medium text-khoi-lam/70 mb-2">Mô tả</label>
                                 <textarea
-                                    value={comboForm.description}
-                                    onChange={(e) => setComboForm({ ...comboForm, description: e.target.value })}
+                                    value={giftForm.description}
+                                    onChange={(e) => setGiftForm({ ...giftForm, description: e.target.value })}
                                     className="w-full px-4 py-3 rounded-xl bg-kem/30 border border-khoi-lam/10 focus:outline-none focus:border-khoi-lam/30"
                                     rows={3}
                                 />
@@ -255,12 +255,12 @@ export default function AdminCombos() {
 
                             <div className="grid grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-khoi-lam/70 mb-2">Giá Combo</label>
+                                    <label className="block text-sm font-medium text-khoi-lam/70 mb-2">Giá Quà Tặng</label>
                                     <input
                                         type="number"
                                         required
-                                        value={comboForm.price}
-                                        onChange={(e) => setComboForm({ ...comboForm, price: Number(e.target.value) })}
+                                        value={giftForm.price}
+                                        onChange={(e) => setGiftForm({ ...giftForm, price: Number(e.target.value) })}
                                         className="w-full px-4 py-3 rounded-xl bg-kem/30 border border-khoi-lam/10 focus:outline-none focus:border-khoi-lam/30"
                                     />
                                 </div>
@@ -268,8 +268,8 @@ export default function AdminCombos() {
                                     <label className="block text-sm font-medium text-khoi-lam/70 mb-2">Badge</label>
                                     <input
                                         type="text"
-                                        value={comboForm.badge}
-                                        onChange={(e) => setComboForm({ ...comboForm, badge: e.target.value })}
+                                        value={giftForm.badge}
+                                        onChange={(e) => setGiftForm({ ...giftForm, badge: e.target.value })}
                                         className="w-full px-4 py-3 rounded-xl bg-kem/30 border border-khoi-lam/10 focus:outline-none focus:border-khoi-lam/30"
                                         placeholder="Ví dụ: Tiết kiệm"
                                     />
@@ -277,11 +277,11 @@ export default function AdminCombos() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-khoi-lam/70 mb-2">Ảnh Combo</label>
+                                <label className="block text-sm font-medium text-khoi-lam/70 mb-2">Ảnh Quà Tặng</label>
                                 <div className="flex flex-col gap-3">
                                     <div className="flex items-center gap-4">
-                                        {comboForm.image && (
-                                            <img src={comboForm.image} alt="Preview" className="w-16 h-16 rounded-xl object-cover" />
+                                        {giftForm.image && (
+                                            <img src={giftForm.image} alt="Preview" className="w-16 h-16 rounded-xl object-cover" />
                                         )}
                                         <input
                                             type="file"
@@ -294,17 +294,17 @@ export default function AdminCombos() {
                                     <input
                                         type="text"
                                         placeholder="Hoặc dán Link ảnh (URL) vào đây"
-                                        value={comboForm.image}
-                                        onChange={(e) => setComboForm({ ...comboForm, image: e.target.value })}
+                                        value={giftForm.image}
+                                        onChange={(e) => setGiftForm({ ...giftForm, image: e.target.value })}
                                         className="w-full px-4 py-3 rounded-xl bg-kem/30 border border-khoi-lam/10 focus:outline-none focus:border-khoi-lam/30 text-sm"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-khoi-lam/70 mb-2">Sản phẩm có trong Combo</label>
+                                <label className="block text-sm font-medium text-khoi-lam/70 mb-2">Sản phẩm có trong Quà Tặng</label>
                                 <div className="space-y-3 mb-3">
-                                    {comboForm.items.map((item, idx) => (
+                                    {giftForm.items.map((item, idx) => (
                                         <div key={idx} className="flex gap-3 items-start">
                                             <div className="flex-1">
                                                 <select
@@ -382,7 +382,7 @@ export default function AdminCombos() {
                                     type="submit"
                                     className="flex-1 px-4 py-3 rounded-xl bg-vang-logo text-khoi-lam font-bold hover:bg-vang-logo/90 transition-colors"
                                 >
-                                    {editingCombo ? 'Cập nhật' : 'Thêm mới'}
+                                    {editingGift ? 'Cập nhật' : 'Thêm mới'}
                                 </button>
                             </div>
                         </form>

@@ -16,6 +16,7 @@ import {
     Download,
     X,
     Activity,
+    Gift,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
@@ -29,6 +30,7 @@ import {
 } from 'recharts';
 import IoTDashboard from '../components/admin/IoTDashboard';
 import AdminCombos from '../components/admin/AdminCombos';
+import AdminGifts from '../components/admin/AdminGifts';
 
 type WeightPriceMap = Record<string, number>;
 
@@ -559,6 +561,17 @@ export default function Admin() {
                                     </button>
 
                                     <button
+                                        onClick={() => setActiveTab('gifts')}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                                            activeTab === 'gifts'
+                                                ? 'bg-vang-logo/20 text-khoi-lam font-bold'
+                                                : 'text-khoi-lam/70 hover:bg-khoi-lam/5'
+                                        }`}
+                                    >
+                                        <Gift className="w-5 h-5" /> Quà tặng
+                                    </button>
+
+                                    <button
                                         onClick={() => setActiveTab('orders')}
                                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
                                             activeTab === 'orders'
@@ -635,6 +648,7 @@ export default function Admin() {
                     <div className="flex-grow bg-white rounded-3xl p-8 shadow-sm border border-khoi-lam/5">
                         {activeTab === 'iot' && <IoTDashboard user={user} />}
                         {activeTab === 'combos' && <AdminCombos />}
+                        {activeTab === 'gifts' && <AdminGifts />}
 
                         {activeTab === 'dashboard' && (
                             <div>

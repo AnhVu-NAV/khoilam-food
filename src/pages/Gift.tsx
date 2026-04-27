@@ -1,47 +1,16 @@
 import { Link } from 'react-router-dom';
 import { Gift as GiftIcon, ShieldCheck, Sparkles } from 'lucide-react';
 
-const giftSets = [
-    {
-        id: 'gift-box-1',
-        name: 'Set quà tặng hộp cứng 01',
-        description:
-            'Set quà tặng chỉn chu, phù hợp biếu người thân, đối tác hoặc khách quý.',
-        items: [
-            '500gr thịt trâu gác bếp',
-            '500gr heo bản gác bếp',
-            'Combo 3 hũ chấm',
-        ],
-        price: 899000,
-        note: 'Hộp cứng sang trọng',
-    },
-    {
-        id: 'gift-box-2',
-        name: 'Set quà tặng hộp cứng 02',
-        description:
-            'Set thiên về thịt trâu gác bếp, phù hợp với người thích hương vị đậm đà đặc trưng.',
-        items: [
-            '1000gr thịt trâu gác bếp',
-            'Combo 3 hũ chấm',
-        ],
-        price: 1000000,
-        note: 'Đậm vị truyền thống',
-    },
-    {
-        id: 'gift-box-3',
-        name: 'Set quà tặng hộp cứng 03',
-        description:
-            'Lựa chọn hợp lý cho người yêu thích thịt heo bản gác bếp và các vị chấm ăn kèm.',
-        items: [
-            '1000gr heo bản gác bếp',
-            'Combo 3 hũ chấm',
-        ],
-        price: 759000,
-        note: 'Dễ biếu tặng',
-    },
-];
+import { useState, useEffect } from 'react';
 
 export default function Gift() {
+    const [gifts, setGifts] = useState<any[]>([]);
+
+    useEffect(() => {
+        fetch('/api/gifts')
+            .then(res => res.json())
+            .then(data => setGifts(Array.isArray(data) ? data : []));
+    }, []);
     return (
         <div className="bg-kem min-h-screen py-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -59,16 +28,19 @@ export default function Gift() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {giftSets.map((giftSet) => (
+                    {gifts.map((giftSet) => (
                         <div
                             key={giftSet.id}
                             className="bg-white rounded-3xl border border-khoi-lam/5 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
                         >
+                            {giftSet.image && (
+                                <img src={giftSet.image} alt={giftSet.name} className="w-full h-48 object-cover" />
+                            )}
                             <div className="p-8 border-b border-khoi-lam/5">
                                 <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
                   <span className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-vang-logo/15 text-khoi-lam">
                     <GiftIcon className="w-4 h-4" />
-                      {giftSet.note}
+                      {giftSet.badge}
                   </span>
 
                                     <span className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full bg-khoi-lam/5 text-khoi-lam/70">
@@ -89,13 +61,13 @@ export default function Gift() {
                             <div className="p-8 flex-grow">
                                 <h3 className="font-semibold text-khoi-lam mb-4">Bao gồm:</h3>
                                 <ul className="space-y-3">
-                                    {giftSet.items.map((item) => (
+                                    {giftSet.items.map((item: any, idx: number) => (
                                         <li
-                                            key={item}
+                                            key={idx}
                                             className="text-sm text-khoi-lam/70 flex items-start gap-3"
                                         >
                                             <span className="mt-1.5 w-2 h-2 rounded-full bg-vang-logo shrink-0"></span>
-                                            <span>{item}</span>
+                                            <span>{item.label} x{item.quantity}</span>
                                         </li>
                                     ))}
                                 </ul>

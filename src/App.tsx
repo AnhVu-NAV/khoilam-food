@@ -13,6 +13,7 @@ import Checkout from './pages/Checkout';
 import Account from './pages/Account';
 import Admin from './pages/Admin';
 import Combo from './pages/Combo';
+import ComboDetail from './pages/ComboDetail';
 import Gift from './pages/Gift';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
@@ -37,6 +38,7 @@ export default function App() {
                             <Route path="tai-khoan" element={<Account />} />
                             <Route path="admin" element={<Admin />} />
                             <Route path="combo" element={<Combo />} />
+                            <Route path="combo/:id" element={<ComboDetail />} />
                             <Route path="qua-tang" element={<Gift />} />
 
                             {/* Fallback for undefined routes */}
