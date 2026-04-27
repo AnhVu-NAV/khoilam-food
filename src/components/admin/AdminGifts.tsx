@@ -2,6 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Package, Plus, Edit, Trash2 } from 'lucide-react';
 
 export default function AdminGifts() {
+    const generateId = (name: string) => {
+        const slug = name.toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '');
+        return `gift-${slug}-${Date.now().toString(36)}`;
+    };
     const [gifts, setGifts] = useState<any[]>([]);
     const [products, setProducts] = useState<any[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -63,11 +71,11 @@ export default function AdminGifts() {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        const payload = { ...giftForm };
+        const id = editingGift ? giftForm.id : generateId(giftForm.name);
+        const payload = { ...giftForm, id };
         const method = editingGift ? 'PUT' : 'POST';
         const url = editingGift
-            ? `/api/gifts?id=${encodeURIComponent(giftForm.id)}`
+            ? `/api/gifts?id=${encodeURIComponent(id)}`
             : '/api/gifts';
 
         const res = await fetch(url, {
@@ -223,17 +231,6 @@ export default function AdminGifts() {
                         <form onSubmit={handleSave} className="space-y-6">
                             <div className="grid grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-khoi-lam/70 mb-2">ID</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        disabled={!!editingGift}
-                                        value={giftForm.id}
-                                        onChange={(e) => setGiftForm({ ...giftForm, id: e.target.value })}
-                                        className="w-full px-4 py-3 rounded-xl bg-kem/30 border border-khoi-lam/10 focus:outline-none focus:border-khoi-lam/30"
-                                    />
-                                </div>
-                                <div>
                                     <label className="block text-sm font-medium text-khoi-lam/70 mb-2">Tên Quà Tặng</label>
                                     <input
                                         type="text"
@@ -304,7 +301,7 @@ export default function AdminGifts() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-khoi-lam/70 mb-2">Sản phẩm có trong Quà Tặng</label>
+                                <label className="block text-sm font-medium text-khoi-lam/70 mb-2">Hộp quà bao gồm những gì?</label>
                                 <div className="space-y-3 mb-3">
                                     {giftForm.items.map((item, idx) => (
                                         <div key={idx} className="flex gap-3 items-start">
@@ -316,7 +313,7 @@ export default function AdminGifts() {
                                                     }}
                                                     className="w-full px-3 py-2 text-sm rounded bg-kem/30 border border-khoi-lam/10"
                                                 >
-                                                    <option value="">-- Quà tặng / Khác --</option>
+                                                    <option value="">-- Chọn sản phẩm / Khác --</option>
                                                     {products.map(p => (
                                                         <option key={p.id} value={p.id}>{p.name}</option>
                                                     ))}

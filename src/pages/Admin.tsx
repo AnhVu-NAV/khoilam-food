@@ -70,6 +70,15 @@ export default function Admin() {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('dashboard');
 
+    const generateProductId = (name: string) => {
+        const slug = name.toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '');
+        return `${slug}-${Date.now().toString(36)}`;
+    };
+
     const [products, setProducts] = useState<any[]>([]);
     const [orders, setOrders] = useState<any[]>([]);
     const [coupons, setCoupons] = useState<any[]>([]);
@@ -265,7 +274,7 @@ export default function Admin() {
         const defaultPrice = getDefaultPriceFromWeights(weights, weightPrices, productForm.price);
 
         const payload = {
-            id: productForm.id.trim(),
+            id: editingProduct ? productForm.id.trim() : generateProductId(productForm.name),
             name: productForm.name.trim(),
             description: productForm.description.trim(),
             ingredients: productForm.ingredients.trim(),
@@ -281,7 +290,7 @@ export default function Admin() {
 
         const method = editingProduct ? 'PUT' : 'POST';
         const url = editingProduct
-            ? `/api/products?id=${encodeURIComponent(productForm.id)}`
+            ? `/api/products?id=${encodeURIComponent(payload.id)}`
             : '/api/products';
 
         const res = await fetch(url, {
@@ -1300,20 +1309,6 @@ export default function Admin() {
 
                         <form onSubmit={handleSaveProduct} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {!editingProduct && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-khoi-lam mb-1">
-                                            Mã sản phẩm
-                                        </label>
-                                        <input
-                                            required
-                                            type="text"
-                                            value={productForm.id}
-                                            onChange={(e) => setProductForm({ ...productForm, id: e.target.value })}
-                                            className="w-full px-4 py-2 border border-khoi-lam/20 rounded-xl focus:outline-none focus:border-vang-logo"
-                                        />
-                                    </div>
-                                )}
 
                                 <div>
                                     <label className="block text-sm font-medium text-khoi-lam mb-1">
