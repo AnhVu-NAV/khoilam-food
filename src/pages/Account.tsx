@@ -8,6 +8,7 @@ export default function Account() {
   const [orders, setOrders] = useState([]);
   const [expandedOrder, setExpandedOrder] = useState<number | null>(null);
   const [orderItems, setOrderItems] = useState<any[]>([]);
+  const [cancelConfirmId, setCancelConfirmId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -45,9 +46,7 @@ export default function Account() {
   };
 
     const cancelOrder = async (orderId: number) => {
-        const confirmCancel = window.confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?');
-        if (!confirmCancel) return;
-
+        setCancelConfirmId(null);
         try {
             const res = await fetch(`/api/orders?action=status&id=${orderId}`, {
                 method: 'PUT',
@@ -174,7 +173,7 @@ export default function Account() {
                         {order.status === 'pending' && (
                           <div className="mt-6 text-right">
                             <button
-                              onClick={() => cancelOrder(order.id)}
+                              onClick={() => setCancelConfirmId(order.id)}
                               className="px-4 py-2 bg-do-gach text-white rounded-xl text-sm font-bold hover:bg-do-gach/90 transition-colors"
                             >
                               Hủy đơn hàng
@@ -190,6 +189,35 @@ export default function Account() {
           </div>
         </div>
       </div>
+    {cancelConfirmId !== null && (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-xl">
+          <div className="w-16 h-16 bg-do-gach/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-do-gach" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 className="font-serif text-xl font-bold text-khoi-lam mb-2">Xác nhận hủy đơn</h3>
+          <p className="text-khoi-lam/70 text-sm mb-6">
+            Bạn có chắc chắn muốn hủy đơn hàng <span className="font-bold">#{cancelConfirmId}</span> không? Hành động này không thể hoàn tác.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setCancelConfirmId(null)}
+              className="flex-1 px-4 py-3 rounded-xl border border-khoi-lam/10 text-khoi-lam font-medium hover:bg-khoi-lam/5 transition-colors"
+            >
+              Không, giữ lại
+            </button>
+            <button
+              onClick={() => cancelOrder(cancelConfirmId)}
+              className="flex-1 px-4 py-3 rounded-xl bg-do-gach text-white font-bold hover:bg-do-gach/90 transition-colors"
+            >
+              Hủy đơn
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </div>
   );
 }

@@ -173,8 +173,7 @@ export default function Admin() {
         let cancel_reason = null;
 
         if (status === 'cancelled') {
-            cancel_reason = prompt('Vui lòng nhập lý do hủy đơn hàng:');
-            if (cancel_reason === null) return;
+            cancel_reason = 'Hủy bởi quản trị viên';
         }
 
         await fetch(`/api/orders?action=status&id=${id}`, {
