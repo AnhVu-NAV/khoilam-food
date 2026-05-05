@@ -11,8 +11,9 @@ declare global {
     var __khoiLamInitPromise: Promise<void> | undefined;
 }
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) throw new Error('Thiếu DATABASE_URL');
+const connectionString =
+    process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING;
+if (!connectionString) throw new Error('Thiếu DATABASE_URL hoặc POSTGRES_URL');
 
 const pool =
     globalThis.__khoiLamPool ||

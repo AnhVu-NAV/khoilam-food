@@ -71,7 +71,13 @@ export default function Combo() {
                         return (
                             <div
                                 key={combo.id}
-                                className="bg-white rounded-3xl border border-khoi-lam/5 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => navigate(`/combo/${combo.id}`)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') navigate(`/combo/${combo.id}`);
+                                }}
+                                className="bg-white rounded-3xl border border-khoi-lam/5 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col cursor-pointer"
                             >
                                 {combo.image && (
                                     <div className="w-full h-48 bg-kem/50">
@@ -112,6 +118,7 @@ export default function Combo() {
                                                 {item.product_id ? (
                                                     <Link
                                                         to={`/san-pham/${item.product_id}`}
+                                                        onClick={(e) => e.stopPropagation()}
                                                         className="hover:text-xanh-rung hover:underline"
                                                     >
                                                         {item.label || item.product_name || item.product_id} x{item.quantity}
@@ -153,12 +160,16 @@ export default function Combo() {
                                         <div className="flex gap-3">
                                             <Link
                                                 to={`/combo/${combo.id}`}
+                                                onClick={(e) => e.stopPropagation()}
                                                 className="flex-1 inline-flex items-center justify-center rounded-xl border border-khoi-lam/10 py-3 px-4 text-sm font-medium text-khoi-lam hover:bg-khoi-lam/5 transition-colors"
                                             >
                                                 Xem chi tiết
                                             </Link>
                                             <button
-                                                onClick={() => handleAddToCart(combo)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleAddToCart(combo);
+                                                }}
                                                 className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-vang-logo py-3 px-4 text-sm font-bold text-khoi-lam hover:bg-vang-logo/90 transition-colors"
                                             >
                                                 <ShoppingBag className="w-4 h-4" />

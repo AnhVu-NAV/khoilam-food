@@ -48,7 +48,13 @@ export default function Gift() {
                     {gifts.map((giftSet) => (
                         <div
                             key={giftSet.id}
-                            className="bg-white rounded-3xl border border-khoi-lam/5 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => navigate(`/qua-tang/${giftSet.id}`)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') navigate(`/qua-tang/${giftSet.id}`);
+                            }}
+                            className="bg-white rounded-3xl border border-khoi-lam/5 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col cursor-pointer"
                         >
                             {giftSet.image && (
                                 <img src={giftSet.image} alt={giftSet.name} className="w-full h-48 object-cover" />
@@ -87,6 +93,7 @@ export default function Gift() {
                                             {item.product_id ? (
                                                 <Link
                                                     to={`/san-pham/${item.product_id}`}
+                                                    onClick={(e) => e.stopPropagation()}
                                                     className="hover:text-xanh-rung hover:underline"
                                                 >
                                                     {item.label || item.product_name || item.product_id} x{item.quantity || 1}
@@ -118,13 +125,17 @@ export default function Gift() {
                                     <div className="flex gap-3">
                                         <Link
                                             to={`/qua-tang/${giftSet.id}`}
+                                            onClick={(e) => e.stopPropagation()}
                                             className="flex-1 inline-flex items-center justify-center rounded-xl border border-khoi-lam/10 py-3 px-4 text-sm font-medium text-khoi-lam hover:bg-khoi-lam/5 transition-colors"
                                         >
                                             Xem chi tiết
                                         </Link>
 
                                         <button
-                                            onClick={() => handleAddToCart(giftSet)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleAddToCart(giftSet);
+                                            }}
                                             className="flex-1 inline-flex items-center justify-center rounded-xl bg-vang-logo py-3 px-4 text-sm font-bold text-khoi-lam hover:bg-vang-logo/90 transition-colors"
                                         >
                                             Chọn hộp quà

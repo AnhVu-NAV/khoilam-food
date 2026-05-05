@@ -1,17 +1,24 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Search, MapPin, Calendar, Thermometer, Droplets, ShieldCheck, Clock, CheckCircle2, QrCode, X } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Scanner } from '@yudiel/react-qr-scanner';
 
-const mockTemperatureData = [
-  { time: '0h', temp: 25, humidity: 60 },
-  { time: '12h', temp: 65, humidity: 45 },
-  { time: '24h', temp: 70, humidity: 40 },
-  { time: '36h', temp: 68, humidity: 38 },
-  { time: '48h', temp: 72, humidity: 35 },
-  { time: '60h', temp: 70, humidity: 30 },
-];
+const extractBatchId = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+
+  try {
+    const url = new URL(trimmed);
+    return (
+      url.searchParams.get('batch') ||
+      url.searchParams.get('id') ||
+      decodeURIComponent(url.pathname.split('/').filter(Boolean).pop() || '')
+    );
+  } catch {
+    return trimmed;
+  }
+};
 
 export default function Traceability() {
   const [batchId, setBatchId] = useState('');
@@ -21,16 +28,17 @@ export default function Traceability() {
   const [batchData, setBatchData] = useState<any>(null);
   const [error, setError] = useState('');
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!batchId) return;
+  const lookupBatch = async (value: string) => {
+    const normalizedBatchId = extractBatchId(value);
+    if (!normalizedBatchId) return;
     
     setIsSearching(true);
     setShowResult(false);
     setError('');
+    setBatchId(normalizedBatchId);
     
     try {
-      const res = await fetch(`/api/batches?id=${batchId}`);
+      const res = await fetch(`/api/batches?id=${encodeURIComponent(normalizedBatchId)}`);
       const data = await res.json();
       
       if (data.success) {
@@ -46,17 +54,30 @@ export default function Traceability() {
     }
   };
 
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await lookupBatch(batchId);
+  };
+
   const handleScan = (text: string) => {
     if (text) {
-      setBatchId(text);
       setIsScannerOpen(false);
-      // Automatically trigger search after a short delay
-      setTimeout(() => {
-        const formEvent = { preventDefault: () => {} } as React.FormEvent;
-        handleSearch(formEvent);
-      }, 500);
+      lookupBatch(text);
     }
   };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const params = new URLSearchParams(window.location.search);
+    const initialBatchId = params.get('batch') || params.get('id');
+
+    if (initialBatchId) {
+      lookupBatch(initialBatchId);
+    }
+  }, []);
+
+  const temperatureData = Array.isArray(batchData?.temperature_log) ? batchData.temperature_log : [];
 
   return (
     <div className="bg-kem min-h-screen py-16">
@@ -195,7 +216,7 @@ export default function Traceability() {
                   <div className="bg-kem/50 rounded-2xl p-6 border border-khoi-lam/5 mb-8">
                     <div className="h-64 w-full">
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={batchData.temperature_log || mockTemperatureData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                        <LineChart data={temperatureData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#4B2E2B" opacity={0.1} vertical={false} />
                           <XAxis dataKey="time" stroke="#4B2E2B" opacity={0.5} fontSize={12} tickLine={false} axisLine={false} />
                           <YAxis stroke="#4B2E2B" opacity={0.5} fontSize={12} tickLine={false} axisLine={false} />

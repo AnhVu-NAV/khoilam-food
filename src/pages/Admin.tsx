@@ -125,7 +125,7 @@ export default function Admin() {
         production_log: { date: string; title: string; description: string; image_url?: string }[];
     }>({ id: '', product_id: '', production_date: '', certificate_url: '', production_log: [] });
 
-    const [expandedCustomer, setExpandedCustomer] = useState<number | null>(null);
+    const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null);
     const [customerOrders, setCustomerOrders] = useState<any[]>([]);
 
     useEffect(() => {
@@ -389,13 +389,13 @@ export default function Admin() {
         fetchData();
     };
 
-    const toggleCustomerOrders = async (customerId: number) => {
+    const toggleCustomerOrders = async (customerId: string) => {
         if (expandedCustomer === customerId) {
             setExpandedCustomer(null);
             setCustomerOrders([]);
         } else {
             setExpandedCustomer(customerId);
-            const res = await fetch(`/api/orders?action=customer-orders&id=${customerId}`);
+            const res = await fetch(`/api/orders?action=customer-orders&id=${encodeURIComponent(customerId)}`);
             const data = await res.json();
             setCustomerOrders(Array.isArray(data) ? data : []);
         }
@@ -523,6 +523,21 @@ export default function Admin() {
         const newLog = [...batchForm.production_log];
         newLog.splice(index, 1);
         setBatchForm({ ...batchForm, production_log: newLog });
+    };
+
+    const buildTraceabilityUrl = (batchId: string) => {
+        const configuredOrigin = import.meta.env.VITE_PUBLIC_SITE_URL?.replace(/\/$/, '');
+        const origin = configuredOrigin || (typeof window !== 'undefined' ? window.location.origin : '');
+        return `${origin}/truy-xuat?batch=${encodeURIComponent(batchId)}`;
+    };
+
+    const getQrBatchLabel = (qrValue: string) => {
+        try {
+            const url = new URL(qrValue);
+            return url.searchParams.get('batch') || qrValue;
+        } catch {
+            return qrValue;
+        }
     };
 
     return (
@@ -666,15 +681,15 @@ export default function Admin() {
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                     <div className="bg-kem/30 p-6 rounded-2xl border border-khoi-lam/10">
-                                        <p className="text-khoi-lam/60 text-sm mb-2">Tổng doanh thu</p>
+                                        <p className="text-khoi-lam/60 text-sm mb-2">Doanh thu hợp lệ</p>
                                         <p className="text-3xl font-bold text-khoi-lam">
-                                            {analytics?.totalRevenue?.toLocaleString('vi-VN')}đ
+                                            {(analytics?.totalRevenue ?? 0).toLocaleString('vi-VN')}đ
                                         </p>
                                     </div>
 
                                     <div className="bg-kem/30 p-6 rounded-2xl border border-khoi-lam/10">
-                                        <p className="text-khoi-lam/60 text-sm mb-2">Tổng đơn hàng</p>
-                                        <p className="text-3xl font-bold text-khoi-lam">{analytics?.orderCount}</p>
+                                        <p className="text-khoi-lam/60 text-sm mb-2">Đơn hợp lệ</p>
+                                        <p className="text-3xl font-bold text-khoi-lam">{analytics?.orderCount ?? 0}</p>
                                     </div>
 
                                     <div className="bg-kem/30 p-6 rounded-2xl border border-khoi-lam/10">
@@ -1020,15 +1035,15 @@ export default function Admin() {
                                                     </td>
                                                     <td className="py-4">
                                                         <button
-                                                            onClick={() => toggleCustomerOrders(c.id)}
+                                                            onClick={() => toggleCustomerOrders(String(c.id))}
                                                             className="text-khoi-lam hover:underline font-medium text-sm"
                                                         >
-                                                            {expandedCustomer === c.id ? 'Đóng' : 'Lịch sử'}
+                                                            {expandedCustomer === String(c.id) ? 'Đóng' : 'Lịch sử'}
                                                         </button>
                                                     </td>
                                                 </tr>
 
-                                                {expandedCustomer === c.id && (
+                                                {expandedCustomer === String(c.id) && (
                                                     <tr>
                                                         <td colSpan={6} className="pb-6">
                                                             <div className="bg-kem/30 p-6 rounded-2xl border border-khoi-lam/10">
@@ -1204,7 +1219,7 @@ export default function Admin() {
                                             </select>
 
                                             <button
-                                                onClick={() => setGeneratedQr(qrBatchId)}
+                                                onClick={() => setGeneratedQr(buildTraceabilityUrl(qrBatchId))}
                                                 disabled={!qrBatchId.trim()}
                                                 className="bg-khoi-lam text-kem px-6 py-2 rounded-xl hover:bg-khoi-lam/90 transition-colors disabled:opacity-50"
                                             >
@@ -1226,7 +1241,10 @@ export default function Admin() {
                                             </div>
 
                                             <div className="text-center">
-                                                <p className="font-bold text-khoi-lam text-lg">{generatedQr}</p>
+                                                <p className="font-bold text-khoi-lam text-lg">
+                                                    Mã lô: {getQrBatchLabel(generatedQr)}
+                                                </p>
+                                                <p className="text-sm text-khoi-lam/60 break-all">{generatedQr}</p>
                                                 <p className="text-sm text-khoi-lam/60">Khói Lam - Đặc sản Tây Bắc</p>
                                             </div>
 
@@ -1251,7 +1269,7 @@ export default function Admin() {
                                                             ctx.fillStyle = 'black';
                                                             ctx.font = 'bold 20px sans-serif';
                                                             ctx.textAlign = 'center';
-                                                            ctx.fillText(generatedQr, canvas.width / 2, img.height + 25);
+                                                            ctx.fillText(getQrBatchLabel(generatedQr), canvas.width / 2, img.height + 25);
                                                             ctx.font = '14px sans-serif';
                                                             ctx.fillText(
                                                                 'Khói Lam - Đặc sản Tây Bắc',

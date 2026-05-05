@@ -12,8 +12,8 @@ export default async function handler(req: any, res: any) {
                 const summaryRes = await pool.query(
                     `
                         SELECT
-                            COALESCE(SUM(total), 0)::int AS total_revenue,
-                            COUNT(*)::int AS order_count
+                            COALESCE(SUM(CASE WHEN status IS DISTINCT FROM 'cancelled' THEN total ELSE 0 END), 0)::int AS total_revenue,
+                            (COUNT(*) FILTER (WHERE status IS DISTINCT FROM 'cancelled'))::int AS order_count
                         FROM orders
                     `
                 );
@@ -24,9 +24,11 @@ export default async function handler(req: any, res: any) {
                             COALESCE(p.name, c.name, g.name, oi.product_id, oi.combo_id, oi.gift_id, 'Sản phẩm') AS name,
                             COALESCE(SUM(oi.quantity), 0)::int AS sold
                         FROM order_items oi
+                        INNER JOIN orders o ON o.id = oi.order_id
                         LEFT JOIN products p ON oi.product_id = p.id
                         LEFT JOIN combos c ON oi.combo_id = c.id
                         LEFT JOIN gifts g ON oi.gift_id = g.id
+                        WHERE o.status IS DISTINCT FROM 'cancelled'
                         GROUP BY name
                         ORDER BY sold DESC
                         LIMIT 8
@@ -52,8 +54,8 @@ export default async function handler(req: any, res: any) {
                                 COALESCE(NULLIF(u.name, ''), u.email) AS name,
                                 u.email,
                                 u.phone,
-                                COUNT(o.id)::int AS order_count,
-                                COALESCE(SUM(o.total), 0)::int AS total_spent,
+                                (COUNT(o.id) FILTER (WHERE o.status IS DISTINCT FROM 'cancelled'))::int AS order_count,
+                                COALESCE(SUM(o.total) FILTER (WHERE o.status IS DISTINCT FROM 'cancelled'), 0)::int AS total_spent,
                                 MAX(o.created_at) AS last_order_at
                             FROM users u
                             LEFT JOIN orders o ON o.user_id = u.id
@@ -66,8 +68,8 @@ export default async function handler(req: any, res: any) {
                                 COALESCE(NULLIF(MAX(o.email), ''), 'Khách vãng lai') AS name,
                                 o.email,
                                 MAX(o.phone) AS phone,
-                                COUNT(o.id)::int AS order_count,
-                                COALESCE(SUM(o.total), 0)::int AS total_spent,
+                                (COUNT(o.id) FILTER (WHERE o.status IS DISTINCT FROM 'cancelled'))::int AS order_count,
+                                COALESCE(SUM(o.total) FILTER (WHERE o.status IS DISTINCT FROM 'cancelled'), 0)::int AS total_spent,
                                 MAX(o.created_at) AS last_order_at
                             FROM orders o
                             WHERE o.user_id IS NULL

@@ -1,7 +1,11 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Gift as GiftIcon, ShieldCheck, Tag, ArrowLeft, Package, Sparkles } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, Gift as GiftIcon, Package, ShieldCheck, Sparkles, Tag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+
+const getItemImage = (item: any) => item.product?.image || item.product_image || '';
+const getItemName = (item: any) =>
+    item.label || item.product?.name || item.product_name || 'Sản phẩm';
 
 export default function GiftDetail() {
     const { id } = useParams<{ id: string }>();
@@ -15,24 +19,22 @@ export default function GiftDetail() {
         const fetchData = async () => {
             try {
                 const [giftRes, productsRes] = await Promise.all([
-                    fetch(`/api/gifts?id=${id}`),
-                    fetch('/api/products')
+                    fetch(`/api/gifts?id=${encodeURIComponent(id || '')}`),
+                    fetch('/api/products'),
                 ]);
                 const giftData = await giftRes.json();
                 const productsData = await productsRes.json();
 
-                if (giftData.success && giftData.gift) {
-                    setGift(giftData.gift);
-                } else {
-                    setGift(null);
-                }
+                setGift(giftData.success && giftData.gift ? giftData.gift : null);
                 setProducts(Array.isArray(productsData) ? productsData : []);
             } catch (err) {
                 console.error(err);
+                setGift(null);
             } finally {
                 setLoading(false);
             }
         };
+
         fetchData();
     }, [id]);
 
@@ -49,64 +51,49 @@ export default function GiftDetail() {
             <div className="bg-kem min-h-screen py-16">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <h1 className="text-3xl font-bold text-khoi-lam mb-4">Không tìm thấy quà tặng</h1>
-                    <Link to="/qua-tang" className="text-vang-logo hover:underline">Quay lại danh sách quà tặng</Link>
+                    <Link to="/qua-tang" className="text-vang-logo hover:underline">
+                        Quay lại danh sách quà tặng
+                    </Link>
                 </div>
             </div>
         );
     }
 
-    // Calculate total original price
     let totalOriginalPrice = 0;
     const enrichedItems = (gift.items || []).map((item: any) => {
-        const product = products.find(p => p.id === item.product_id);
-        let itemPrice = 0;
+        const product = products.find((p) => p.id === item.product_id);
+        const unitPrice = Number(item.unit_price || 0);
+        const fallbackPrice = Number(product?.price || 0);
+        const itemPrice = unitPrice || fallbackPrice;
+        const quantity = Number(item.quantity || 1);
+        const totalItemPrice = Number(item.total_price || itemPrice * quantity);
 
-        if (product) {
-            // Try to find price by weight first
-            if (item.weight && product.weight_prices) {
-                const wpObj = typeof product.weight_prices === 'string'
-                    ? JSON.parse(product.weight_prices)
-                    : product.weight_prices;
-                if (wpObj[item.weight]) {
-                    itemPrice = Number(wpObj[item.weight]);
-                }
-            }
-            // Also try weightPrices (camelCase from frontend)
-            if (!itemPrice && item.weight && product.weightPrices) {
-                const wp = typeof product.weightPrices === 'string'
-                    ? JSON.parse(product.weightPrices)
-                    : product.weightPrices;
-                if (wp[item.weight]) {
-                    itemPrice = Number(wp[item.weight]);
-                }
-            }
-            // Fallback to base price
-            if (!itemPrice) {
-                itemPrice = Number(product.price || 0);
-            }
-        }
-
-        const totalItemPrice = itemPrice * (item.quantity || 1);
         totalOriginalPrice += totalItemPrice;
 
         return {
             ...item,
             product,
+            quantity,
             itemPrice,
-            totalItemPrice
+            totalItemPrice,
         };
     });
 
     totalOriginalPrice = Number(gift.retail_price || totalOriginalPrice);
-    const giftPrice = Number(gift.price);
-    const savedAmount = Number(gift.savings || (totalOriginalPrice > giftPrice ? totalOriginalPrice - giftPrice : 0));
+    const giftPrice = Number(gift.price || 0);
+    const savedAmount = Number(
+        gift.savings || (totalOriginalPrice > giftPrice ? totalOriginalPrice - giftPrice : 0)
+    );
 
     const handleAddToCart = () => {
         addToCart(
             {
                 id: gift.id,
                 name: gift.name,
-                image: gift.image || gift.items?.find((item: any) => item.product_image)?.product_image || '/images/default-combo.jpg',
+                image:
+                    gift.image ||
+                    gift.items?.find((item: any) => item.product_image)?.product_image ||
+                    '/images/default-combo.jpg',
                 price: giftPrice,
                 description: gift.description,
             },
@@ -124,17 +111,23 @@ export default function GiftDetail() {
     return (
         <div className="bg-kem min-h-screen py-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <Link to="/qua-tang" className="inline-flex items-center text-khoi-lam/70 hover:text-khoi-lam mb-8 transition-colors">
+                <Link
+                    to="/qua-tang"
+                    className="inline-flex items-center text-khoi-lam/70 hover:text-khoi-lam mb-8 transition-colors"
+                >
                     <ArrowLeft className="w-5 h-5 mr-2" />
                     Quay lại Quà tặng
                 </Link>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                    {/* Image Section */}
                     <div>
                         <div className="bg-white rounded-3xl p-4 shadow-sm border border-khoi-lam/5 sticky top-24">
                             {gift.image ? (
-                                <img src={gift.image} alt={gift.name} className="w-full h-auto rounded-2xl object-cover aspect-[4/3]" />
+                                <img
+                                    src={gift.image}
+                                    alt={gift.name}
+                                    className="w-full h-auto rounded-2xl object-cover aspect-[4/3]"
+                                />
                             ) : (
                                 <div className="w-full aspect-[4/3] bg-gradient-to-br from-vang-logo/10 to-khoi-lam/5 rounded-2xl flex items-center justify-center">
                                     <GiftIcon className="w-20 h-20 text-vang-logo/30" />
@@ -143,7 +136,6 @@ export default function GiftDetail() {
                         </div>
                     </div>
 
-                    {/* Details Section */}
                     <div>
                         <div className="mb-6 flex flex-wrap gap-3">
                             {gift.badge && (
@@ -167,50 +159,90 @@ export default function GiftDetail() {
                         </p>
 
                         <div className="mb-8">
-                            <h3 className="text-xl font-bold text-khoi-lam mb-4">Sản phẩm trong hộp quà:</h3>
+                            <h3 className="text-xl font-bold text-khoi-lam mb-4">
+                                Sản phẩm trong hộp quà:
+                            </h3>
                             <div className="space-y-4">
-                                {enrichedItems.map((item: any, idx: number) => (
-                                    <div key={idx} className="flex justify-between items-center p-4 bg-white rounded-2xl border border-khoi-lam/5 shadow-sm">
-                                        <div className="flex items-center gap-4">
-                                            {item.product?.image ? (
-                                                <img src={item.product.image} alt={item.label || item.product?.name} className="w-16 h-16 rounded-xl object-cover" />
-                                            ) : (
-                                                <div className="w-16 h-16 bg-kem rounded-xl flex items-center justify-center">
-                                                    <Package className="w-6 h-6 text-khoi-lam/30" />
+                                {enrichedItems.map((item: any, idx: number) => {
+                                    const image = getItemImage(item);
+                                    const name = getItemName(item);
+                                    const productLink = item.product_id ? `/san-pham/${item.product_id}` : '';
+
+                                    return (
+                                        <div
+                                            key={item.id || idx}
+                                            className="flex justify-between items-center p-4 bg-white rounded-2xl border border-khoi-lam/5 shadow-sm gap-4"
+                                        >
+                                            <div className="flex items-center gap-4 min-w-0">
+                                                {image ? (
+                                                    productLink ? (
+                                                        <Link to={productLink} className="shrink-0">
+                                                            <img
+                                                                src={image}
+                                                                alt={name}
+                                                                className="w-16 h-16 rounded-xl object-cover"
+                                                            />
+                                                        </Link>
+                                                    ) : (
+                                                        <img
+                                                            src={image}
+                                                            alt={name}
+                                                            className="w-16 h-16 rounded-xl object-cover"
+                                                        />
+                                                    )
+                                                ) : (
+                                                    <div className="w-16 h-16 bg-kem rounded-xl flex items-center justify-center shrink-0">
+                                                        <Package className="w-6 h-6 text-khoi-lam/30" />
+                                                    </div>
+                                                )}
+                                                <div className="min-w-0">
+                                                    {productLink ? (
+                                                        <Link
+                                                            to={productLink}
+                                                            className="font-medium text-khoi-lam text-lg hover:text-xanh-rung hover:underline"
+                                                        >
+                                                            {name}
+                                                        </Link>
+                                                    ) : (
+                                                        <p className="font-medium text-khoi-lam text-lg">
+                                                            {name || 'Quà tặng kèm'}
+                                                        </p>
+                                                    )}
+                                                    <p className="text-sm text-khoi-lam/60">
+                                                        Số lượng: {item.quantity}
+                                                        {item.weight ? ` - Phân loại: ${item.weight}` : ''}
+                                                    </p>
                                                 </div>
-                                            )}
-                                            <div>
-                                                <p className="font-medium text-khoi-lam text-lg">
-                                                    {item.label || item.product?.name || 'Sản phẩm'}
-                                                </p>
-                                                <p className="text-sm text-khoi-lam/60">
-                                                    Số lượng: {item.quantity} {item.weight ? `- Phân loại: ${item.weight}` : ''}
-                                                </p>
+                                            </div>
+                                            <div className="text-right shrink-0">
+                                                {item.totalItemPrice > 0 ? (
+                                                    <span className="font-medium text-khoi-lam">
+                                                        {item.totalItemPrice.toLocaleString('vi-VN')}đ
+                                                    </span>
+                                                ) : (
+                                                    <span className="font-medium text-xanh-rung">Tặng kèm</span>
+                                                )}
                                             </div>
                                         </div>
-                                        <div className="text-right">
-                                            {item.totalItemPrice > 0 ? (
-                                                <span className="font-medium text-khoi-lam">{item.totalItemPrice.toLocaleString('vi-VN')}đ</span>
-                                            ) : (
-                                                <span className="font-medium text-xanh-rung">{item.product_id ? 'Đang cập nhật giá' : 'Tặng kèm'}</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
 
-                        {/* Price comparison */}
                         <div className="bg-khoi-lam/5 p-6 rounded-2xl border border-khoi-lam/10 mb-8">
                             {totalOriginalPrice > 0 && (
                                 <div className="flex justify-between items-center mb-3 text-khoi-lam/70">
                                     <span>Tổng giá mua lẻ:</span>
-                                    <span className="line-through">{totalOriginalPrice.toLocaleString('vi-VN')}đ</span>
+                                    <span className="line-through">
+                                        {totalOriginalPrice.toLocaleString('vi-VN')}đ
+                                    </span>
                                 </div>
                             )}
                             <div className="flex justify-between items-center mb-4">
                                 <span className="text-lg font-bold text-khoi-lam">Giá hộp quà:</span>
-                                <span className="text-3xl font-bold text-do-gach">{giftPrice.toLocaleString('vi-VN')}đ</span>
+                                <span className="text-3xl font-bold text-do-gach">
+                                    {giftPrice.toLocaleString('vi-VN')}đ
+                                </span>
                             </div>
                             {savedAmount > 0 && (
                                 <div className="bg-xanh-rung/10 text-xanh-rung p-3 rounded-xl text-center font-medium">
@@ -219,17 +251,12 @@ export default function GiftDetail() {
                             )}
                         </div>
 
-                        <div className="flex gap-3">
-                            <Link
-                                to="/san-pham"
-                                className="flex-1 inline-flex items-center justify-center rounded-xl border border-khoi-lam/10 py-4 px-4 text-sm font-medium text-khoi-lam hover:bg-khoi-lam/5 transition-colors"
-                            >
-                                Xem sản phẩm
-                            </Link>
-                            <button className="flex-1 bg-vang-logo text-khoi-lam py-4 rounded-xl font-bold text-lg hover:bg-vang-logo/90 transition-colors shadow-sm">
-                                Chọn hộp quà
-                            </button>
-                        </div>
+                        <button
+                            onClick={handleAddToCart}
+                            className="w-full bg-vang-logo text-khoi-lam py-4 rounded-xl font-bold text-lg hover:bg-vang-logo/90 transition-colors shadow-sm"
+                        >
+                            Chọn hộp quà
+                        </button>
 
                         <div className="mt-6 flex items-center gap-2 text-khoi-lam/55 text-sm justify-center">
                             <ShieldCheck className="w-4 h-4" />
