@@ -44,6 +44,11 @@ const ensureOrderColumns = async () => {
     await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'cod'`);
 };
 
+const ensureBatchColumns = async () => {
+    await pool.query(`ALTER TABLE batches ADD COLUMN IF NOT EXISTS certificate_images TEXT DEFAULT '[]'`);
+    await pool.query(`ALTER TABLE batches ADD COLUMN IF NOT EXISTS quality_checks TEXT DEFAULT '[]'`);
+};
+
 const ensureOrderItemColumns = async () => {
     await pool.query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS weight VARCHAR(50)`);
     await pool.query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS combo_id VARCHAR(255)`);
@@ -210,6 +215,13 @@ const seedBatches = async () => {
         },
     ]);
 
+    const mockQualityChecks = JSON.stringify([
+        { label: 'Độ ẩm sản phẩm', value: '22% (Đạt)' },
+        { label: 'Vi sinh vật', value: 'Âm tính' },
+        { label: 'Chất bảo quản', value: 'Không phát hiện' },
+        { label: 'Hạn sử dụng', value: '6 tháng từ NSX' },
+    ]);
+
     await pool.query(
         `
             INSERT INTO batches (
@@ -218,9 +230,11 @@ const seedBatches = async () => {
                 production_date,
                 temperature_log,
                 certificate_url,
-                production_log
+                production_log,
+                certificate_images,
+                quality_checks
             )
-            VALUES ($1, $2, $3, $4, $5, $6)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                 ON CONFLICT (id) DO NOTHING
         `,
         [
@@ -230,6 +244,8 @@ const seedBatches = async () => {
             mockTempLog,
             'ATVSTP Số 123/2026',
             mockProdLog,
+            '[]',
+            mockQualityChecks,
         ]
     );
 };
@@ -470,9 +486,13 @@ export const initDB = async () => {
                 production_date VARCHAR(255),
                 temperature_log TEXT,
                 certificate_url TEXT,
-                production_log TEXT
+                production_log TEXT,
+                certificate_images TEXT DEFAULT '[]',
+                quality_checks TEXT DEFAULT '[]'
                 );
         `);
+
+        await ensureBatchColumns();
 
         await pool.query(`
             CREATE TABLE IF NOT EXISTS coupons (

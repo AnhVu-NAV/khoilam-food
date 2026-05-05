@@ -1,5 +1,25 @@
 import pool, { initDB } from '../server/db.js';
 
+const parseJsonArray = (value: unknown) => {
+    if (Array.isArray(value)) return value;
+    if (!value || typeof value !== 'string') return [];
+
+    try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return [];
+    }
+};
+
+const normalizeBatch = (batch: any) => ({
+    ...batch,
+    temperature_log: parseJsonArray(batch.temperature_log),
+    production_log: parseJsonArray(batch.production_log),
+    certificate_images: parseJsonArray(batch.certificate_images),
+    quality_checks: parseJsonArray(batch.quality_checks),
+});
+
 export default async function handler(req: any, res: any) {
     try {
         await initDB();
@@ -21,26 +41,42 @@ export default async function handler(req: any, res: any) {
                     return res.status(404).json({ success: false, message: 'Không tìm thấy lô' });
                 }
 
-                batch.temperature_log = batch.temperature_log ? JSON.parse(batch.temperature_log) : [];
-                batch.production_log = batch.production_log ? JSON.parse(batch.production_log) : [];
-
-                return res.json({ success: true, batch });
+                return res.json({ success: true, batch: normalizeBatch(batch) });
             }
 
             if (req.method === 'PUT') {
-                const { product_id, production_date, temperature_log, certificate_url, production_log } =
+                const {
+                    product_id,
+                    production_date,
+                    temperature_log,
+                    certificate_url,
+                    production_log,
+                    certificate_images,
+                    quality_checks,
+                } =
                 req.body || {};
 
                 await pool.query(
-                    `UPDATE batches
-             SET product_id = $1, production_date = $2, temperature_log = $3, certificate_url = $4, production_log = $5
-             WHERE id = $6`,
+                    `
+                        UPDATE batches
+                        SET
+                            product_id = $1,
+                            production_date = $2,
+                            temperature_log = $3,
+                            certificate_url = $4,
+                            production_log = $5,
+                            certificate_images = $6,
+                            quality_checks = $7
+                        WHERE id = $8
+                    `,
                     [
                         product_id,
                         production_date,
                         JSON.stringify(temperature_log ?? []),
                         certificate_url,
                         JSON.stringify(production_log ?? []),
+                        JSON.stringify(certificate_images ?? []),
+                        JSON.stringify(quality_checks ?? []),
                         id,
                     ]
                 );
@@ -66,22 +102,27 @@ export default async function handler(req: any, res: any) {
             );
 
             return res.json(
-                batchesRes.rows.map((batch) => ({
-                    ...batch,
-                    temperature_log: batch.temperature_log ? JSON.parse(batch.temperature_log) : [],
-                    production_log: batch.production_log ? JSON.parse(batch.production_log) : [],
-                }))
+                batchesRes.rows.map(normalizeBatch)
             );
         }
 
         if (req.method === 'POST') {
-            const { id, product_id, production_date, temperature_log, certificate_url, production_log } =
+            const {
+                id,
+                product_id,
+                production_date,
+                temperature_log,
+                certificate_url,
+                production_log,
+                certificate_images,
+                quality_checks,
+            } =
             req.body || {};
 
             await pool.query(
                 `INSERT INTO batches (
-          id, product_id, production_date, temperature_log, certificate_url, production_log
-        ) VALUES ($1, $2, $3, $4, $5, $6)`,
+          id, product_id, production_date, temperature_log, certificate_url, production_log, certificate_images, quality_checks
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
                 [
                     id,
                     product_id,
@@ -89,6 +130,8 @@ export default async function handler(req: any, res: any) {
                     JSON.stringify(temperature_log ?? []),
                     certificate_url,
                     JSON.stringify(production_log ?? []),
+                    JSON.stringify(certificate_images ?? []),
+                    JSON.stringify(quality_checks ?? []),
                 ]
             );
 

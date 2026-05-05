@@ -155,7 +155,7 @@ export default function IoTDashboard({ user }: { user?: any }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-kem/30 p-6 rounded-2xl border border-khoi-lam/10 text-center">
-          <h4 className="font-medium text-khoi-lam mb-4">Mật độ khói</h4>
+          <h4 className="font-medium text-khoi-lam mb-4">Độ ẩm</h4>
           <div className="relative w-32 h-16 mx-auto overflow-hidden">
             <div className="absolute top-0 left-0 w-32 h-32 rounded-full border-[12px] border-khoi-lam/10 border-t-vang-logo border-l-vang-logo transform -rotate-45"></div>
           </div>
@@ -283,7 +283,7 @@ export default function IoTDashboard({ user }: { user?: any }) {
         <h3 className="font-bold text-khoi-lam mb-4">Thẻ 4: Cảnh báo liên quan Lô hàng</h3>
         <div className="space-y-3">
           <div className="bg-vang-logo/10 p-4 rounded-xl border border-vang-logo/20">
-            <p className="text-khoi-lam font-medium">Cảnh báo: 14 phút trước - Mật độ khói thấp tại KXL-2603 &lt;80% (Đã xử lý).</p>
+            <p className="text-khoi-lam font-medium">Cảnh báo: 14 phút trước - Độ ẩm thấp tại KXL-2603 &lt;80% (Đã xử lý).</p>
           </div>
           <div className="bg-vang-logo/10 p-4 rounded-xl border border-vang-logo/20">
             <p className="text-khoi-lam font-medium">Cảnh báo: 04/03/2026 - Nhiệt độ vượt 80°C tại KXL-2603 (Đã xử lý).</p>
@@ -313,7 +313,7 @@ export default function IoTDashboard({ user }: { user?: any }) {
             <span className="text-xs font-bold text-do-gach mt-1">&lt;80%</span>
           </div>
           <div>
-            <h4 className="font-bold text-khoi-lam text-xl">Cảnh báo Mật độ khói THẤP</h4>
+            <h4 className="font-bold text-khoi-lam text-xl">Cảnh báo Độ ẩm THẤP</h4>
             <p className="text-xanh-rung font-medium mb-2">● Hun khói tốt</p>
             <p className="text-sm text-khoi-lam/80 leading-relaxed">
               Thời gian xảy ra: 15:05 | 05/03/2026<br/>
@@ -331,7 +331,7 @@ export default function IoTDashboard({ user }: { user?: any }) {
         <div className="flex gap-4 text-xs text-khoi-lam/70 mb-4">
           <span className="flex items-center gap-1"><div className="w-3 h-0.5 bg-blue-500"></div> Nhiệt độ (target: 70-80°C)</span>
           <span className="flex items-center gap-1"><div className="w-3 h-0.5 bg-green-500"></div> Độ ẩm (target: 40-50%)</span>
-          <span className="flex items-center gap-1"><div className="w-3 h-0.5 bg-orange-500"></div> Mật độ khói (target: 80-90%)</span>
+          <span className="flex items-center gap-1"><div className="w-3 h-0.5 bg-orange-500"></div> Độ ẩm buồng hun (target: 80-90%)</span>
         </div>
         <div className="h-48 w-full bg-kem/10 rounded-xl p-2 relative">
           <ResponsiveContainer width="100%" height="100%">
@@ -342,7 +342,7 @@ export default function IoTDashboard({ user }: { user?: any }) {
               <Tooltip />
               <Line type="monotone" dataKey="temp" stroke="#3b82f6" strokeWidth={1.5} dot={false} />
               <Line type="monotone" dataKey="humidity" stroke="#10b981" strokeWidth={1.5} dot={false} />
-              <Line type="monotone" dataKey="smoke" stroke="#f97316" strokeWidth={1.5} dot={false} />
+              <Line type="monotone" dataKey="smoke" name="Độ ẩm buồng hun (%)" stroke="#f97316" strokeWidth={1.5} dot={false} />
             </LineChart>
           </ResponsiveContainer>
           {/* Mock alert highlight area */}
@@ -383,7 +383,7 @@ export default function IoTDashboard({ user }: { user?: any }) {
 
         <h4 className="font-medium text-khoi-lam mb-3">Nhật ký cảnh báo liên quan Lot #KL-2603</h4>
         <div className="bg-vang-logo/10 p-4 rounded-xl border border-vang-logo/20">
-          <p className="text-khoi-lam font-medium">Cảnh báo: 14 phút trước - Mật độ khói thấp tại KXL-2603 &lt;80% (Đã xử lý).</p>
+          <p className="text-khoi-lam font-medium">Cảnh báo: 14 phút trước - Độ ẩm thấp tại KXL-2603 &lt;80% (Đã xử lý).</p>
         </div>
       </div>
     </div>

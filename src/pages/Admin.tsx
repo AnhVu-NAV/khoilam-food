@@ -33,6 +33,38 @@ import AdminCombos from '../components/admin/AdminCombos';
 import AdminGifts from '../components/admin/AdminGifts';
 
 type WeightPriceMap = Record<string, number>;
+type BatchTemperatureLog = { time: string; temp: string | number; humidity: string | number };
+type BatchQualityCheck = { label: string; value: string };
+
+const defaultQualityChecks: BatchQualityCheck[] = [
+    { label: 'Độ ẩm sản phẩm', value: '22% (Đạt)' },
+    { label: 'Vi sinh vật', value: 'Âm tính' },
+    { label: 'Chất bảo quản', value: 'Không phát hiện' },
+    { label: 'Hạn sử dụng', value: '6 tháng từ NSX' },
+];
+
+const createEmptyBatchForm = () => ({
+    id: '',
+    product_id: '',
+    production_date: '',
+    certificate_url: '',
+    certificate_images: [] as string[],
+    quality_checks: defaultQualityChecks.map((item) => ({ ...item })),
+    temperature_log: [] as BatchTemperatureLog[],
+    production_log: [] as { date: string; title: string; description: string; image_url?: string }[],
+});
+
+const parseArrayField = <T,>(value: unknown): T[] => {
+    if (Array.isArray(value)) return value as T[];
+    if (!value || typeof value !== 'string') return [];
+
+    try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? (parsed as T[]) : [];
+    } catch {
+        return [];
+    }
+};
 
 const parseWeightPricesInput = (input: string): WeightPriceMap => {
     return input
@@ -117,13 +149,7 @@ export default function Admin() {
     const [editingBatch, setEditingBatch] = useState<any>(null);
     const [isBatchDetailModalOpen, setIsBatchDetailModalOpen] = useState(false);
     const [selectedBatchDetail, setSelectedBatchDetail] = useState<any>(null);
-    const [batchForm, setBatchForm] = useState<{
-        id: string;
-        product_id: string;
-        production_date: string;
-        certificate_url: string;
-        production_log: { date: string; title: string; description: string; image_url?: string }[];
-    }>({ id: '', product_id: '', production_date: '', certificate_url: '', production_log: [] });
+    const [batchForm, setBatchForm] = useState(createEmptyBatchForm);
 
     const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null);
     const [customerOrders, setCustomerOrders] = useState<any[]>([]);
@@ -362,6 +388,45 @@ export default function Admin() {
         }
     };
 
+    const handleBatchCertificateUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        setIsUploading(true);
+
+        try {
+            const urls: string[] = [];
+
+            for (const file of files) {
+                const formData = new FormData();
+                formData.append('image', file);
+
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await res.json();
+
+                if (!data.success) {
+                    throw new Error(data.message || 'Lỗi tải ảnh chứng nhận');
+                }
+
+                urls.push(data.url);
+            }
+
+            setBatchForm((prev) => ({
+                ...prev,
+                certificate_images: [...prev.certificate_images, ...urls],
+            }));
+        } catch (error: any) {
+            alert(error?.message || 'Lỗi kết nối khi tải ảnh chứng nhận');
+        } finally {
+            setIsUploading(false);
+            e.target.value = '';
+        }
+    };
+
     const handleSaveCoupon = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -404,32 +469,29 @@ export default function Admin() {
     const openBatchModal = (batch?: any) => {
         if (batch) {
             setEditingBatch(batch);
-            let parsedLog = batch.production_log;
-
-            if (typeof parsedLog === 'string') {
-                try {
-                    parsedLog = JSON.parse(parsedLog);
-                } catch {
-                    parsedLog = [];
-                }
-            }
+            const parsedLog = parseArrayField<{ date: string; title: string; description: string; image_url?: string }>(
+                batch.production_log
+            );
+            const parsedTemperatureLog = parseArrayField<BatchTemperatureLog>(batch.temperature_log);
+            const parsedCertificateImages = parseArrayField<string>(batch.certificate_images);
+            const parsedQualityChecks = parseArrayField<BatchQualityCheck>(batch.quality_checks);
 
             setBatchForm({
                 id: batch.id,
                 product_id: batch.product_id,
                 production_date: batch.production_date,
                 certificate_url: batch.certificate_url || '',
+                certificate_images: parsedCertificateImages,
+                quality_checks:
+                    parsedQualityChecks.length > 0
+                        ? parsedQualityChecks
+                        : defaultQualityChecks.map((item) => ({ ...item })),
+                temperature_log: parsedTemperatureLog,
                 production_log: parsedLog || [],
             });
         } else {
             setEditingBatch(null);
-            setBatchForm({
-                id: '',
-                product_id: '',
-                production_date: '',
-                certificate_url: '',
-                production_log: [],
-            });
+            setBatchForm(createEmptyBatchForm());
         }
 
         setIsBatchModalOpen(true);
@@ -438,18 +500,24 @@ export default function Admin() {
     const handleSaveBatch = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const mockTempLog = [
-            { time: '0h', temp: 25, humidity: 60 },
-            { time: '12h', temp: 65, humidity: 45 },
-            { time: '24h', temp: 70, humidity: 40 },
-            { time: '36h', temp: 68, humidity: 38 },
-            { time: '48h', temp: 72, humidity: 35 },
-            { time: '60h', temp: 70, humidity: 30 },
-        ];
-
         const payload = {
             ...batchForm,
-            temperature_log: mockTempLog,
+            certificate_images: batchForm.certificate_images.map((url) => url.trim()).filter(Boolean),
+            quality_checks: batchForm.quality_checks
+                .map((item) => ({ label: item.label.trim(), value: item.value.trim() }))
+                .filter((item) => item.label || item.value),
+            temperature_log: batchForm.temperature_log
+                .map((item) => ({
+                    time: String(item.time).trim(),
+                    temp: Number(item.temp),
+                    humidity: Number(item.humidity),
+                }))
+                .filter(
+                    (item) =>
+                        item.time &&
+                        Number.isFinite(item.temp) &&
+                        Number.isFinite(item.humidity)
+                ),
         };
 
         const method = editingBatch ? 'PUT' : 'POST';
@@ -465,13 +533,7 @@ export default function Admin() {
 
         if (res.ok) {
             setIsBatchModalOpen(false);
-            setBatchForm({
-                id: '',
-                product_id: '',
-                production_date: '',
-                certificate_url: '',
-                production_log: [],
-            });
+            setBatchForm(createEmptyBatchForm());
             setEditingBatch(null);
             fetchData();
         } else {
@@ -523,6 +585,63 @@ export default function Admin() {
         const newLog = [...batchForm.production_log];
         newLog.splice(index, 1);
         setBatchForm({ ...batchForm, production_log: newLog });
+    };
+
+    const addTemperatureLog = () => {
+        setBatchForm({
+            ...batchForm,
+            temperature_log: [...batchForm.temperature_log, { time: '', temp: '', humidity: '' }],
+        });
+    };
+
+    const updateTemperatureLog = (index: number, field: keyof BatchTemperatureLog, value: string) => {
+        const newLog = [...batchForm.temperature_log];
+        newLog[index] = { ...newLog[index], [field]: value };
+        setBatchForm({ ...batchForm, temperature_log: newLog });
+    };
+
+    const removeTemperatureLog = (index: number) => {
+        const newLog = [...batchForm.temperature_log];
+        newLog.splice(index, 1);
+        setBatchForm({ ...batchForm, temperature_log: newLog });
+    };
+
+    const addQualityCheck = () => {
+        setBatchForm({
+            ...batchForm,
+            quality_checks: [...batchForm.quality_checks, { label: '', value: '' }],
+        });
+    };
+
+    const updateQualityCheck = (index: number, field: keyof BatchQualityCheck, value: string) => {
+        const newChecks = [...batchForm.quality_checks];
+        newChecks[index] = { ...newChecks[index], [field]: value };
+        setBatchForm({ ...batchForm, quality_checks: newChecks });
+    };
+
+    const removeQualityCheck = (index: number) => {
+        const newChecks = [...batchForm.quality_checks];
+        newChecks.splice(index, 1);
+        setBatchForm({ ...batchForm, quality_checks: newChecks });
+    };
+
+    const addCertificateImageUrl = () => {
+        setBatchForm({
+            ...batchForm,
+            certificate_images: [...batchForm.certificate_images, ''],
+        });
+    };
+
+    const updateCertificateImageUrl = (index: number, value: string) => {
+        const newImages = [...batchForm.certificate_images];
+        newImages[index] = value;
+        setBatchForm({ ...batchForm, certificate_images: newImages });
+    };
+
+    const removeCertificateImage = (index: number) => {
+        const newImages = [...batchForm.certificate_images];
+        newImages.splice(index, 1);
+        setBatchForm({ ...batchForm, certificate_images: newImages });
     };
 
     const buildTraceabilityUrl = (batchId: string) => {
@@ -1148,17 +1267,13 @@ export default function Admin() {
                                                 <td className="py-4 text-right">
                                                     <button
                                                         onClick={() => {
-                                                            let parsedLog = b.production_log;
-
-                                                            if (typeof parsedLog === 'string') {
-                                                                try {
-                                                                    parsedLog = JSON.parse(parsedLog);
-                                                                } catch {
-                                                                    parsedLog = [];
-                                                                }
-                                                            }
-
-                                                            setSelectedBatchDetail({ ...b, production_log: parsedLog });
+                                                            setSelectedBatchDetail({
+                                                                ...b,
+                                                                production_log: parseArrayField(b.production_log),
+                                                                temperature_log: parseArrayField(b.temperature_log),
+                                                                certificate_images: parseArrayField(b.certificate_images),
+                                                                quality_checks: parseArrayField(b.quality_checks),
+                                                            });
                                                             setIsBatchDetailModalOpen(true);
                                                         }}
                                                         className="text-vang-logo hover:underline font-medium mr-4"
@@ -1668,6 +1783,164 @@ export default function Admin() {
                                 </div>
                             </div>
 
+                            <div className="mt-6 space-y-3">
+                                <div className="flex justify-between items-center gap-3">
+                                    <label className="block text-sm font-medium text-khoi-lam">
+                                        Ảnh chứng nhận / kiểm định
+                                    </label>
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-sm bg-khoi-lam/5 text-khoi-lam px-3 py-1 rounded-lg hover:bg-khoi-lam/10 font-medium cursor-pointer">
+                                            Upload ảnh
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                multiple
+                                                onChange={handleBatchCertificateUpload}
+                                                className="hidden"
+                                            />
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={addCertificateImageUrl}
+                                            className="text-sm bg-khoi-lam/5 text-khoi-lam px-3 py-1 rounded-lg hover:bg-khoi-lam/10 font-medium"
+                                        >
+                                            + Thêm URL
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {batchForm.certificate_images.map((url, index) => (
+                                    <div key={index} className="flex gap-2 items-center">
+                                        <input
+                                            type="text"
+                                            placeholder="URL ảnh chứng nhận"
+                                            value={url}
+                                            onChange={(e) => updateCertificateImageUrl(index, e.target.value)}
+                                            className="flex-grow px-3 py-1.5 text-sm border border-khoi-lam/20 rounded-lg focus:outline-none focus:border-vang-logo"
+                                        />
+                                        {url && (
+                                            <img
+                                                src={url}
+                                                alt="Chứng nhận"
+                                                className="w-12 h-12 rounded-lg object-cover border border-khoi-lam/10"
+                                            />
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={() => removeCertificateImage(index)}
+                                            className="p-2 text-do-gach hover:bg-do-gach/10 rounded-lg"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ))}
+
+                                {batchForm.certificate_images.length === 0 && (
+                                    <p className="text-sm text-khoi-lam/60 italic">
+                                        Chưa có ảnh chứng nhận. Có thể upload ảnh hoặc nhập URL ảnh.
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="mt-6">
+                                <div className="flex justify-between items-center mb-4">
+                                    <label className="block text-sm font-medium text-khoi-lam">
+                                        Chỉ tiêu chứng nhận chất lượng
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={addQualityCheck}
+                                        className="text-sm bg-khoi-lam/5 text-khoi-lam px-3 py-1 rounded-lg hover:bg-khoi-lam/10 font-medium"
+                                    >
+                                        + Thêm chỉ tiêu
+                                    </button>
+                                </div>
+
+                                <div className="space-y-2">
+                                    {batchForm.quality_checks.map((check, index) => (
+                                        <div key={index} className="flex gap-2 items-center">
+                                            <input
+                                                type="text"
+                                                placeholder="Tên chỉ tiêu"
+                                                value={check.label}
+                                                onChange={(e) => updateQualityCheck(index, 'label', e.target.value)}
+                                                className="w-1/2 px-3 py-1.5 text-sm border border-khoi-lam/20 rounded-lg focus:outline-none focus:border-vang-logo"
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="Kết quả"
+                                                value={check.value}
+                                                onChange={(e) => updateQualityCheck(index, 'value', e.target.value)}
+                                                className="w-1/2 px-3 py-1.5 text-sm border border-khoi-lam/20 rounded-lg focus:outline-none focus:border-vang-logo"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => removeQualityCheck(index)}
+                                                className="p-2 text-do-gach hover:bg-do-gach/10 rounded-lg"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="mt-6">
+                                <div className="flex justify-between items-center mb-4">
+                                    <label className="block text-sm font-medium text-khoi-lam">
+                                        Dữ liệu nhiệt độ & độ ẩm hun
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={addTemperatureLog}
+                                        className="text-sm bg-khoi-lam/5 text-khoi-lam px-3 py-1 rounded-lg hover:bg-khoi-lam/10 font-medium"
+                                    >
+                                        + Thêm điểm đo
+                                    </button>
+                                </div>
+
+                                <div className="space-y-2">
+                                    {batchForm.temperature_log.map((item, index) => (
+                                        <div key={index} className="flex gap-2 items-center">
+                                            <input
+                                                type="text"
+                                                placeholder="Mốc thời gian, VD: 12h"
+                                                value={item.time}
+                                                onChange={(e) => updateTemperatureLog(index, 'time', e.target.value)}
+                                                className="w-1/3 px-3 py-1.5 text-sm border border-khoi-lam/20 rounded-lg focus:outline-none focus:border-vang-logo"
+                                            />
+                                            <input
+                                                type="number"
+                                                placeholder="Nhiệt độ °C"
+                                                value={item.temp}
+                                                onChange={(e) => updateTemperatureLog(index, 'temp', e.target.value)}
+                                                className="w-1/3 px-3 py-1.5 text-sm border border-khoi-lam/20 rounded-lg focus:outline-none focus:border-vang-logo"
+                                            />
+                                            <input
+                                                type="number"
+                                                placeholder="Độ ẩm %"
+                                                value={item.humidity}
+                                                onChange={(e) => updateTemperatureLog(index, 'humidity', e.target.value)}
+                                                className="w-1/3 px-3 py-1.5 text-sm border border-khoi-lam/20 rounded-lg focus:outline-none focus:border-vang-logo"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => removeTemperatureLog(index)}
+                                                className="p-2 text-do-gach hover:bg-do-gach/10 rounded-lg"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+
+                                    {batchForm.temperature_log.length === 0 && (
+                                        <p className="text-sm text-khoi-lam/60 italic text-center py-4">
+                                            Chưa có điểm đo. Biểu đồ truy xuất sẽ chỉ hiện khi lô có dữ liệu thật.
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
                             <div className="mt-6">
                                 <div className="flex justify-between items-center mb-4">
                                     <label className="block text-sm font-medium text-khoi-lam">
@@ -1794,6 +2067,61 @@ export default function Admin() {
 
                             <div>
                                 <h4 className="font-bold text-khoi-lam mb-4">Nhật ký sản xuất</h4>
+                                {selectedBatchDetail.certificate_images &&
+                                selectedBatchDetail.certificate_images.length > 0 && (
+                                    <div className="mb-6">
+                                        <h4 className="font-bold text-khoi-lam mb-4">Ảnh chứng nhận</h4>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                            {selectedBatchDetail.certificate_images.map((url: string, index: number) => (
+                                                <a key={index} href={url} target="_blank" rel="noreferrer">
+                                                    <img
+                                                        src={url}
+                                                        alt={`Chứng nhận ${index + 1}`}
+                                                        className="w-full aspect-square object-cover rounded-xl border border-khoi-lam/10"
+                                                    />
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {selectedBatchDetail.quality_checks &&
+                                selectedBatchDetail.quality_checks.length > 0 && (
+                                    <div className="mb-6">
+                                        <h4 className="font-bold text-khoi-lam mb-4">Chỉ tiêu chất lượng</h4>
+                                        <div className="space-y-2">
+                                            {selectedBatchDetail.quality_checks.map((check: any, index: number) => (
+                                                <div
+                                                    key={index}
+                                                    className="flex justify-between bg-kem/30 p-3 rounded-xl border border-khoi-lam/10"
+                                                >
+                                                    <span className="text-khoi-lam/70">{check.label}</span>
+                                                    <span className="font-bold text-khoi-lam">{check.value}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {selectedBatchDetail.temperature_log &&
+                                selectedBatchDetail.temperature_log.length > 0 && (
+                                    <div className="mb-6">
+                                        <h4 className="font-bold text-khoi-lam mb-4">Dữ liệu nhiệt độ & độ ẩm</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                            {selectedBatchDetail.temperature_log.map((item: any, index: number) => (
+                                                <div
+                                                    key={index}
+                                                    className="bg-kem/30 p-3 rounded-xl border border-khoi-lam/10 text-sm"
+                                                >
+                                                    <p className="font-bold text-khoi-lam">{item.time}</p>
+                                                    <p className="text-khoi-lam/70">Nhiệt độ: {item.temp}°C</p>
+                                                    <p className="text-khoi-lam/70">Độ ẩm: {item.humidity}%</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {selectedBatchDetail.production_log &&
                                 selectedBatchDetail.production_log.length > 0 ? (
                                     <div className="space-y-4">
