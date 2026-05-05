@@ -3,11 +3,136 @@ import pool, { initDB } from '../server/db.js';
 export default async function handler(req: any, res: any) {
     try {
         await initDB();
-        
+
         const action = req.query?.action;
         const id = req.query?.id;
 
         if (req.method === 'GET') {
+            if (action === 'analytics') {
+                const summaryRes = await pool.query(
+                    `
+                        SELECT
+                            COALESCE(SUM(total), 0)::int AS total_revenue,
+                            COUNT(*)::int AS order_count
+                        FROM orders
+                    `
+                );
+
+                const topProductsRes = await pool.query(
+                    `
+                        SELECT
+                            COALESCE(p.name, c.name, g.name, oi.product_id, oi.combo_id, oi.gift_id, 'Sản phẩm') AS name,
+                            COALESCE(SUM(oi.quantity), 0)::int AS sold
+                        FROM order_items oi
+                        LEFT JOIN products p ON oi.product_id = p.id
+                        LEFT JOIN combos c ON oi.combo_id = c.id
+                        LEFT JOIN gifts g ON oi.gift_id = g.id
+                        GROUP BY name
+                        ORDER BY sold DESC
+                        LIMIT 8
+                    `
+                );
+
+                return res.json({
+                    totalRevenue: Number(summaryRes.rows[0]?.total_revenue ?? 0),
+                    orderCount: Number(summaryRes.rows[0]?.order_count ?? 0),
+                    topProducts: topProductsRes.rows.map((row) => ({
+                        name: row.name,
+                        sold: Number(row.sold ?? 0),
+                    })),
+                });
+            }
+
+            if (action === 'customers') {
+                const customersRes = await pool.query(
+                    `
+                        WITH registered_customers AS (
+                            SELECT
+                                u.id::text AS id,
+                                COALESCE(NULLIF(u.name, ''), u.email) AS name,
+                                u.email,
+                                u.phone,
+                                COUNT(o.id)::int AS order_count,
+                                COALESCE(SUM(o.total), 0)::int AS total_spent,
+                                MAX(o.created_at) AS last_order_at
+                            FROM users u
+                            LEFT JOIN orders o ON o.user_id = u.id
+                            WHERE u.role = 'user'
+                            GROUP BY u.id, u.name, u.email, u.phone
+                        ),
+                        guest_customers AS (
+                            SELECT
+                                CONCAT('guest:', LOWER(o.email)) AS id,
+                                COALESCE(NULLIF(MAX(o.email), ''), 'Khách vãng lai') AS name,
+                                o.email,
+                                MAX(o.phone) AS phone,
+                                COUNT(o.id)::int AS order_count,
+                                COALESCE(SUM(o.total), 0)::int AS total_spent,
+                                MAX(o.created_at) AS last_order_at
+                            FROM orders o
+                            WHERE o.user_id IS NULL
+                              AND o.email IS NOT NULL
+                              AND NOT EXISTS (
+                                  SELECT 1
+                                  FROM users u
+                                  WHERE LOWER(u.email) = LOWER(o.email)
+                              )
+                            GROUP BY LOWER(o.email), o.email
+                        )
+                        SELECT *
+                        FROM (
+                            SELECT * FROM registered_customers
+                            UNION ALL
+                            SELECT * FROM guest_customers
+                        ) customers
+                        WHERE order_count > 0 OR email IS NOT NULL
+                        ORDER BY total_spent DESC, last_order_at DESC NULLS LAST, name ASC
+                    `
+                );
+
+                return res.json(
+                    customersRes.rows.map((customer) => ({
+                        ...customer,
+                        order_count: Number(customer.order_count ?? 0),
+                        total_spent: Number(customer.total_spent ?? 0),
+                    }))
+                );
+            }
+
+            if (action === 'customer-orders') {
+                if (!id || Array.isArray(id)) {
+                    return res.status(400).json({ success: false, message: 'ID không hợp lệ' });
+                }
+
+                const customerId = String(id);
+                const ordersRes = customerId.startsWith('guest:')
+                    ? await pool.query(
+                          `
+                              SELECT *
+                              FROM orders
+                              WHERE user_id IS NULL AND LOWER(email) = LOWER($1)
+                              ORDER BY created_at DESC, id DESC
+                          `,
+                          [customerId.replace(/^guest:/, '')]
+                      )
+                    : await pool.query(
+                          `
+                              SELECT *
+                              FROM orders
+                              WHERE user_id = $1
+                              ORDER BY created_at DESC, id DESC
+                          `,
+                          [customerId]
+                      );
+
+                return res.json(
+                    ordersRes.rows.map((order) => ({
+                        ...order,
+                        total: Number(order.total ?? 0),
+                    }))
+                );
+            }
+
             if (action === 'items') {
                 if (!id || Array.isArray(id)) {
                     return res.status(400).json({ success: false, message: 'ID không hợp lệ' });
@@ -42,12 +167,24 @@ export default async function handler(req: any, res: any) {
                 );
             }
 
-            // Default GET all orders (could handle customer-orders, analytics etc here if implemented)
-            // But preserving existing behavior
             const result = await pool.query(
-                `SELECT * FROM orders ORDER BY created_at DESC, id DESC`
+                `
+                    SELECT
+                        o.*,
+                        u.name AS user_name,
+                        u.email AS user_email
+                    FROM orders o
+                    LEFT JOIN users u ON o.user_id = u.id
+                    ORDER BY o.created_at DESC, o.id DESC
+                `
             );
-            return res.json(result.rows);
+
+            return res.json(
+                result.rows.map((order) => ({
+                    ...order,
+                    total: Number(order.total ?? 0),
+                }))
+            );
         }
 
         if (req.method === 'PUT') {
@@ -70,6 +207,7 @@ export default async function handler(req: any, res: any) {
 
                 return res.json({ success: true });
             }
+
             return res.status(405).json({ success: false, message: 'Method not allowed for specific order action' });
         }
 
