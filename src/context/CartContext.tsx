@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product } from '../data/products';
 
 interface CartItem {
     product: any;
@@ -8,11 +7,22 @@ interface CartItem {
     price: number;
     isCombo?: boolean;
     comboId?: string;
+    isGift?: boolean;
+    giftId?: string;
 }
 
 interface CartContextType {
     items: CartItem[];
-    addToCart: (product: any, quantity: number, weight: string, price: number, isCombo?: boolean, comboId?: string) => void;
+    addToCart: (
+        product: any,
+        quantity: number,
+        weight: string,
+        price?: number,
+        isCombo?: boolean,
+        comboId?: string,
+        isGift?: boolean,
+        giftId?: string
+    ) => void;
     removeFromCart: (productId: string, weight: string) => void;
     updateQuantity: (productId: string, weight: string, quantity: number) => void;
     clearCart: () => void;
@@ -42,18 +52,34 @@ export function CartProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('cart', JSON.stringify(items));
     }, [items]);
 
-    const addToCart = (product: any, quantity: number, weight: string, price: number, isCombo?: boolean, comboId?: string) => {
+    const addToCart = (
+        product: any,
+        quantity: number,
+        weight: string,
+        price?: number,
+        isCombo?: boolean,
+        comboId?: string,
+        isGift?: boolean,
+        giftId?: string
+    ) => {
         const normalizedQuantity = Math.max(1, Number(quantity) || 1);
-        const normalizedPrice = Math.max(0, Number(price) || 0);
+        const normalizedPrice = Math.max(0, Number(price ?? product?.price) || 0);
 
         setItems((prev) => {
             const existing = prev.find(
-                (item) => item.product.id === product.id && item.weight === weight && item.isCombo === isCombo
+                (item) =>
+                    item.product.id === product.id &&
+                    item.weight === weight &&
+                    item.isCombo === isCombo &&
+                    item.isGift === isGift
             );
 
             if (existing) {
                 return prev.map((item) =>
-                    item.product.id === product.id && item.weight === weight && item.isCombo === isCombo
+                    item.product.id === product.id &&
+                    item.weight === weight &&
+                    item.isCombo === isCombo &&
+                    item.isGift === isGift
                         ? {
                             ...item,
                             quantity: item.quantity + normalizedQuantity,
@@ -72,6 +98,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
                     price: normalizedPrice,
                     isCombo,
                     comboId,
+                    isGift,
+                    giftId,
                 },
             ];
         });

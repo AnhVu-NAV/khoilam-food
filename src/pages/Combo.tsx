@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Tag, Users } from 'lucide-react';
 import { useCart } from '../context/CartContext';
@@ -20,6 +20,10 @@ export default function Combo() {
     }, []);
 
     const getOriginalPrice = (combo: any) => {
+        if (Number(combo.retail_price || 0) > 0) {
+            return Number(combo.retail_price);
+        }
+
         if (!combo.items || !products.length) return combo.price;
         let originalTotal = 0;
         combo.items.forEach((item: any) => {
@@ -35,10 +39,11 @@ export default function Combo() {
         const dummyProduct = {
             id: combo.id,
             name: combo.name,
-            image: combo.image || '/images/default-combo.jpg',
-            price: combo.price
+            image: combo.image || combo.items?.find((item: any) => item.product_image)?.product_image || '/images/default-combo.jpg',
+            price: Number(combo.price || 0),
+            description: combo.description,
         };
-        addToCart(dummyProduct, 1, 'combo', combo.price, true, combo.id);
+        addToCart(dummyProduct, 1, 'combo', Number(combo.price || 0), true, combo.id);
         navigate('/gio-hang');
     };
 
@@ -104,7 +109,16 @@ export default function Combo() {
                                                 className="text-sm text-khoi-lam/70 flex items-start gap-3"
                                             >
                                                 <span className="mt-1.5 w-2 h-2 rounded-full bg-vang-logo shrink-0"></span>
-                                                <span>{item.label || item.product_id} x{item.quantity}</span>
+                                                {item.product_id ? (
+                                                    <Link
+                                                        to={`/san-pham/${item.product_id}`}
+                                                        className="hover:text-xanh-rung hover:underline"
+                                                    >
+                                                        {item.label || item.product_name || item.product_id} x{item.quantity}
+                                                    </Link>
+                                                ) : (
+                                                    <span>{item.label || 'Quà tặng kèm'} x{item.quantity}</span>
+                                                )}
                                             </li>
                                         ))}
                                     </ul>

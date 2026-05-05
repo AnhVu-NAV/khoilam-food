@@ -54,8 +54,9 @@ export default function Checkout() {
                     email,
                     name,
                     items: items.map((i) => ({
-                        product_id: i.isCombo ? null : i.product.id,
+                        product_id: i.isCombo || i.isGift ? null : i.product.id,
                         combo_id: i.isCombo ? i.comboId : null,
+                        gift_id: i.isGift ? i.giftId : null,
                         quantity: i.quantity,
                         weight: i.weight,
                         price: i.price,
@@ -335,7 +336,9 @@ export default function Checkout() {
                                             <p className="font-semibold text-khoi-lam line-clamp-2">
                                                 {item.product.name}
                                             </p>
-                                            <p className="text-sm text-khoi-lam/60">Phân loại: {item.weight}</p>
+                                            <p className="text-sm text-khoi-lam/60">
+                                                {item.isGift ? 'Hộp quà' : item.isCombo ? 'Combo' : `Phân loại: ${item.weight}`}
+                                            </p>
                                             <p className="text-sm text-khoi-lam/60">SL: {item.quantity}</p>
                                             <p className="text-sm font-medium text-khoi-lam">
                                                 {item.price.toLocaleString('vi-VN')}đ

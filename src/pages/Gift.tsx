@@ -1,16 +1,33 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Gift as GiftIcon, ShieldCheck, Sparkles } from 'lucide-react';
 
 import { useState, useEffect } from 'react';
+import { useCart } from '../context/CartContext';
 
 export default function Gift() {
     const [gifts, setGifts] = useState<any[]>([]);
+    const { addToCart } = useCart();
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetch('/api/gifts')
             .then(res => res.json())
             .then(data => setGifts(Array.isArray(data) ? data : []));
     }, []);
+
+    const handleAddToCart = (giftSet: any) => {
+        const giftProduct = {
+            id: giftSet.id,
+            name: giftSet.name,
+            image: giftSet.image || giftSet.items?.find((item: any) => item.product_image)?.product_image || '/images/default-combo.jpg',
+            price: Number(giftSet.price || 0),
+            description: giftSet.description,
+        };
+
+        addToCart(giftProduct, 1, 'gift', Number(giftSet.price || 0), false, undefined, true, giftSet.id);
+        navigate('/gio-hang');
+    };
+
     return (
         <div className="bg-kem min-h-screen py-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -61,13 +78,22 @@ export default function Gift() {
                             <div className="p-8 flex-grow">
                                 <h3 className="font-semibold text-khoi-lam mb-4">Bao gồm:</h3>
                                 <ul className="space-y-3">
-                                    {giftSet.items.map((item: any, idx: number) => (
+                                    {(giftSet.items || []).map((item: any, idx: number) => (
                                         <li
                                             key={idx}
                                             className="text-sm text-khoi-lam/70 flex items-start gap-3"
                                         >
                                             <span className="mt-1.5 w-2 h-2 rounded-full bg-vang-logo shrink-0"></span>
-                                            <span>{item.label} x{item.quantity}</span>
+                                            {item.product_id ? (
+                                                <Link
+                                                    to={`/san-pham/${item.product_id}`}
+                                                    className="hover:text-xanh-rung hover:underline"
+                                                >
+                                                    {item.label || item.product_name || item.product_id} x{item.quantity || 1}
+                                                </Link>
+                                            ) : (
+                                                <span>{item.label || 'Quà tặng kèm'} x{item.quantity || 1}</span>
+                                            )}
                                         </li>
                                     ))}
                                 </ul>
@@ -98,6 +124,7 @@ export default function Gift() {
                                         </Link>
 
                                         <button
+                                            onClick={() => handleAddToCart(giftSet)}
                                             className="flex-1 inline-flex items-center justify-center rounded-xl bg-vang-logo py-3 px-4 text-sm font-bold text-khoi-lam hover:bg-vang-logo/90 transition-colors"
                                         >
                                             Chọn hộp quà

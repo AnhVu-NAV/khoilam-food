@@ -46,10 +46,28 @@ const ensureOrderColumns = async () => {
 const ensureOrderItemColumns = async () => {
     await pool.query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS weight VARCHAR(50)`);
     await pool.query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS combo_id VARCHAR(255)`);
+    await pool.query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS gift_id VARCHAR(255)`);
 };
 
 const ensureComboItemColumns = async () => {
     await pool.query(`ALTER TABLE combo_items ADD COLUMN IF NOT EXISTS weight VARCHAR(50)`);
+};
+
+const ensureGiftItemColumns = async () => {
+    await pool.query(`ALTER TABLE gift_items ADD COLUMN IF NOT EXISTS weight VARCHAR(50)`);
+};
+
+const normalizeSeededBoxItems = async () => {
+    await pool.query(`UPDATE combo_items SET product_id = $1 WHERE product_id = $2`, [
+        'lon-ban-gac-bep',
+        'heo-gac-bep',
+    ]);
+    await pool.query(`UPDATE gift_items SET product_id = $1 WHERE product_id = $2`, [
+        'lon-ban-gac-bep',
+        'heo-gac-bep',
+    ]);
+    await pool.query(`UPDATE gift_items SET weight = REPLACE(weight, 'gr', 'g') WHERE weight LIKE '%gr'`);
+    await pool.query(`UPDATE combo_items SET weight = REPLACE(weight, 'gr', 'g') WHERE weight LIKE '%gr'`);
 };
 
 const seedUsers = async () => {
@@ -442,6 +460,8 @@ export const initDB = async () => {
             );
         `);
 
+        await ensureGiftItemColumns();
+
         await pool.query(`
             CREATE TABLE IF NOT EXISTS batches (
                                                    id VARCHAR(255) PRIMARY KEY,
@@ -495,6 +515,7 @@ export const initDB = async () => {
         await seedProducts();
         await seedCombos();
         await seedGifts();
+        await normalizeSeededBoxItems();
         await seedCoupons();
         await seedBatches();
     })().catch((error) => {

@@ -76,7 +76,9 @@ export default function Cart() {
                                     <h3 className="font-serif text-xl font-semibold text-khoi-lam">
                                         {item.product.name}
                                     </h3>
-                                    <p className="text-sm text-khoi-lam/60 mb-2">Trọng lượng: {item.weight}</p>
+                                    <p className="text-sm text-khoi-lam/60 mb-2">
+                                        {item.isGift ? 'Hộp quà tặng' : item.isCombo ? 'Combo' : `Trọng lượng: ${item.weight}`}
+                                    </p>
                                     <p className="font-medium text-khoi-lam">{item.price.toLocaleString('vi-VN')}đ</p>
                                     <p className="text-sm text-khoi-lam/60 mt-1">
                                         Thành tiền: {(item.price * item.quantity).toLocaleString('vi-VN')}đ

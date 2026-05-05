@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Package, ShieldCheck, Tag, ArrowLeft } from 'lucide-react';
+import { useCart } from '../context/CartContext';
 
 export default function ComboDetail() {
     const { id } = useParams<{ id: string }>();
+    const { addToCart } = useCart();
+    const navigate = useNavigate();
     const [combo, setCombo] = useState<any>(null);
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -54,7 +57,7 @@ export default function ComboDetail() {
 
     // Calculate total original price
     let totalOriginalPrice = 0;
-    const enrichedItems = combo.items.map((item: any) => {
+    const enrichedItems = (combo.items || []).map((item: any) => {
         const product = products.find(p => p.id === item.product_id);
         let itemPrice = 0;
         
@@ -94,8 +97,27 @@ export default function ComboDetail() {
         };
     });
 
+    totalOriginalPrice = Number(combo.retail_price || totalOriginalPrice);
     const comboPrice = Number(combo.price);
-    const savedAmount = totalOriginalPrice > comboPrice ? totalOriginalPrice - comboPrice : 0;
+    const savedAmount = Number(combo.savings || (totalOriginalPrice > comboPrice ? totalOriginalPrice - comboPrice : 0));
+
+    const handleAddToCart = () => {
+        addToCart(
+            {
+                id: combo.id,
+                name: combo.name,
+                image: combo.image || combo.items?.find((item: any) => item.product_image)?.product_image || '/images/default-combo.jpg',
+                price: comboPrice,
+                description: combo.description,
+            },
+            1,
+            'combo',
+            comboPrice,
+            true,
+            combo.id
+        );
+        navigate('/gio-hang');
+    };
 
     return (
         <div className="bg-kem min-h-screen py-16">
@@ -148,17 +170,38 @@ export default function ComboDetail() {
                                 {enrichedItems.map((item: any, idx: number) => (
                                     <div key={idx} className="flex justify-between items-center p-4 bg-white rounded-2xl border border-khoi-lam/5 shadow-sm">
                                         <div className="flex items-center gap-4">
-                                            {item.product?.image ? (
-                                                <img src={item.product.image} alt={item.label || item.product?.name} className="w-16 h-16 rounded-xl object-cover" />
+                                            {item.product_id && (item.product?.image || item.product_image) ? (
+                                                <Link to={`/san-pham/${item.product_id}`} className="shrink-0">
+                                                    <img
+                                                        src={item.product?.image || item.product_image}
+                                                        alt={item.label || item.product?.name || item.product_name}
+                                                        className="w-16 h-16 rounded-xl object-cover"
+                                                    />
+                                                </Link>
+                                            ) : item.product?.image || item.product_image ? (
+                                                <img
+                                                    src={item.product?.image || item.product_image}
+                                                    alt={item.label || item.product?.name || item.product_name}
+                                                    className="w-16 h-16 rounded-xl object-cover"
+                                                />
                                             ) : (
                                                 <div className="w-16 h-16 bg-kem rounded-xl flex items-center justify-center">
                                                     <Package className="w-6 h-6 text-khoi-lam/30" />
                                                 </div>
                                             )}
                                             <div>
-                                                <p className="font-medium text-khoi-lam text-lg">
-                                                    {item.label || item.product?.name || 'Sản phẩm'}
-                                                </p>
+                                                {item.product_id ? (
+                                                    <Link
+                                                        to={`/san-pham/${item.product_id}`}
+                                                        className="font-medium text-khoi-lam text-lg hover:text-xanh-rung hover:underline"
+                                                    >
+                                                        {item.label || item.product?.name || item.product_name || 'Sản phẩm'}
+                                                    </Link>
+                                                ) : (
+                                                    <p className="font-medium text-khoi-lam text-lg">
+                                                        {item.label || 'Quà tặng kèm'}
+                                                    </p>
+                                                )}
                                                 <p className="text-sm text-khoi-lam/60">
                                                     Số lượng: {item.quantity} {item.weight ? `- Phân loại: ${item.weight}` : ''}
                                                 </p>
@@ -192,7 +235,10 @@ export default function ComboDetail() {
                             )}
                         </div>
 
-                        <button className="w-full bg-vang-logo text-khoi-lam py-4 rounded-xl font-bold text-lg hover:bg-vang-logo/90 transition-colors shadow-sm">
+                        <button
+                            onClick={handleAddToCart}
+                            className="w-full bg-vang-logo text-khoi-lam py-4 rounded-xl font-bold text-lg hover:bg-vang-logo/90 transition-colors shadow-sm"
+                        >
                             Thêm vào giỏ hàng
                         </button>
                     </div>

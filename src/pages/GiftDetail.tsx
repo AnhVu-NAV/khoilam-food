@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Gift as GiftIcon, ShieldCheck, Tag, ArrowLeft, Package, Sparkles } from 'lucide-react';
+import { useCart } from '../context/CartContext';
 
 export default function GiftDetail() {
     const { id } = useParams<{ id: string }>();
+    const { addToCart } = useCart();
+    const navigate = useNavigate();
     const [gift, setGift] = useState<any>(null);
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -94,8 +97,29 @@ export default function GiftDetail() {
         };
     });
 
+    totalOriginalPrice = Number(gift.retail_price || totalOriginalPrice);
     const giftPrice = Number(gift.price);
-    const savedAmount = totalOriginalPrice > giftPrice ? totalOriginalPrice - giftPrice : 0;
+    const savedAmount = Number(gift.savings || (totalOriginalPrice > giftPrice ? totalOriginalPrice - giftPrice : 0));
+
+    const handleAddToCart = () => {
+        addToCart(
+            {
+                id: gift.id,
+                name: gift.name,
+                image: gift.image || gift.items?.find((item: any) => item.product_image)?.product_image || '/images/default-combo.jpg',
+                price: giftPrice,
+                description: gift.description,
+            },
+            1,
+            'gift',
+            giftPrice,
+            false,
+            undefined,
+            true,
+            gift.id
+        );
+        navigate('/gio-hang');
+    };
 
     return (
         <div className="bg-kem min-h-screen py-16">

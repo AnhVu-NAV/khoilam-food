@@ -17,10 +17,14 @@ export default async function handler(req: any, res: any) {
                     `
                         SELECT
                             oi.*,
-                            p.name AS product_name,
-                            p.image AS product_image
+                            COALESCE(p.name, c.name, g.name) AS product_name,
+                            COALESCE(p.image, c.image, g.image) AS product_image,
+                            c.name AS combo_name,
+                            g.name AS gift_name
                         FROM order_items oi
-                                 LEFT JOIN products p ON oi.product_id = p.id
+                        LEFT JOIN products p ON oi.product_id = p.id
+                        LEFT JOIN combos c ON oi.combo_id = c.id
+                        LEFT JOIN gifts g ON oi.gift_id = g.id
                         WHERE oi.order_id = $1
                         ORDER BY oi.id ASC
                     `,
@@ -33,6 +37,7 @@ export default async function handler(req: any, res: any) {
                         quantity: Number(item.quantity ?? 1),
                         price: Number(item.price ?? 0),
                         weight: item.weight ?? '',
+                        item_type: item.gift_id ? 'gift' : item.combo_id ? 'combo' : 'product',
                     }))
                 );
             }
@@ -121,16 +126,18 @@ export default async function handler(req: any, res: any) {
                                     order_id,
                                     product_id,
                                     combo_id,
+                                    gift_id,
                                     quantity,
                                     price,
                                     weight
                                 )
-                                VALUES ($1, $2, $3, $4, $5, $6)
+                                VALUES ($1, $2, $3, $4, $5, $6, $7)
                             `,
                             [
                                 order.id,
                                 item.product_id || null,
                                 item.combo_id || null,
+                                item.gift_id || null,
                                 Number(item.quantity ?? 1),
                                 Number(item.price ?? 0),
                                 item.weight ?? '',
